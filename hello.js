@@ -41,9 +41,9 @@ app.use(cookieSession({
 }));
 
 
-app.use('/', index);
-app.use('/proy', proyect);
-app.use('/intern',intern);
+app.use('/lab', index);
+app.use('/lab/proy', proyect);
+app.use('/lab/intern',intern);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
