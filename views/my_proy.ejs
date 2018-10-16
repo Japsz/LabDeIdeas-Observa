@@ -1,0 +1,65 @@
+<%- include layouts/proyect_header.ejs %>
+
+
+<div class="container blog-content">
+    <h3 class="page-header">Mis Proyectos</h3>
+    <div class="row">
+        <div class="col-md-12 blog-main">
+            <div class="row">
+                <div class="col-sm-6 " id="psts">
+                    <% if(data.length) {
+                        var f_gen;
+                        console.log(data.length/2);
+
+                    for(var i = 0;i<data.length;i++){
+                        f_gen = new Date(data[i].actualizado);
+                        f_gen = f_gen.toLocaleString();
+                    if(i>0 && i == parseInt(data.length/2) + 1){
+                    %>
+                </div>
+                <div class="col-sm-6">
+                    <%
+                    }
+
+                    %>
+                    <section class="blog-post" id="<%= data[i].idproyecto%>">
+                        <div class="panel panel-default">
+                            <div class="panel-body">
+                                <% if(data[i].media != "no"){ %>
+                                <img src="<%= data[i].media%>" width="auto" style="margin: auto;display: block;" class="img-responsive">
+                                <% } %>
+                                <div class="blog-post-meta">
+                                    <input class="hidden" value="<%= data[i].tagz%>" data-id="<%= data[i].idproyecto%>">
+                                    <p class="blog-post-date pull-right">etapa: <%= data[i].etapa%> | <%= f_gen%></p>
+                                </div>
+                                <div class="blog-post-content">
+                                    <a href="/proy/get/<%= data[i].idproyecto%>">
+                                        <h2 class="blog-post-title"><%= data[i].titulo%></h2>
+                                        <h4><%= data[i].problema%></h4>
+                                    </a>
+                                    <p><%- data[i].descripcion%></p>
+                                    <div class="blog-post-share pull-right">
+                                        <a class="btn btn-info" data-id="<%= data[i].idproyecto%>" href="/lab/proy/get/<%= data[i].idproyecto%>">
+                                            Ver
+                                        </a>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <%
+
+                    }
+                    } else {%>
+                    <p> No hay proyectos</p>
+                    <% } %>
+
+                </div>
+            </div>
+
+        </div><!-- /.blog-main -->
+
+
+
+<%- include layouts/proyect_footer.ejs %>

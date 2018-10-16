@@ -1,0 +1,119 @@
+<%- include layouts/proyect_header.ejs %>
+
+
+<div class="container blog-content">
+    <div class="row">
+        <div class="steps"style="margin-bottom: 20px;">
+            <ul class="steps-container">
+                <% var etapa_w = 100/(gral.etapas.length +1);
+
+                for(var i = 0;i<gral.etapas.length;i++){
+                %>
+                <li style="width:<%= etapa_w%>%;" <% if(i+1 <= gral.etapa){%>class="activated"<%}%>>
+                    <div class="step">
+                        <div class="step-image"><span></span></div>
+                        <div class="step-current">Etapa <%= i+1%></div>
+                        <div class="step-description"><%= gral.etapas[i]%></div>
+                    </div>
+                </li>
+                <%}%>
+                <li style="width:<%= etapa_w%>%;" <% if(gral.etapa > gral.etapas.length){%>class="activated"<%}%>>
+                    <div class="step">
+                        <div class="step-image"><span></span></div>
+                        <div class="step-current">Etapa <%= i+1%></div>
+                        <div class="step-description">Fin!</div>
+                    </div>
+                </li>
+            </ul>
+            <div class="step-bar" style="width: <%= etapa_w*gral.etapa%>%;"></div>
+        </div>
+        <div class="col-sm-8 blog-main">
+            <h3 class="page-header">Últimas actualizaciones</h3>
+            <div class="row">
+                <div class="col-sm-12">
+<% if(data.length) {
+    var f_gen;
+    for(var i = 0;i<data.length;i++){
+        f_gen = new Date(data[i].fecha);
+        f_gen = f_gen.toLocaleString();
+if(data[i].tipo < 5){%>
+                    <section class="blog-post" id="<%= data[i].idpost %>">
+                        <div class="panel panel-danger">
+                            <% if(data[i].tipo == 3){%>
+                            <img src="<%= data[i].principal%>" style="margin: auto;display: block;" width="auto" class="img-responsive">
+                            <%} else if(data[i].tipo == 4){%>
+                            <iframe width="100%" height="372" src="https://www.youtube.com/embed/<%= data[i].principal%>?rel=0&amp;showinfo=0" frameborder="0" allowfullscreen=""></iframe>
+                            <%}%>
+
+                            <div class="panel-body">
+                                <div class="blog-post-content">
+                                    <%if(data[i].tipo == 2){%>
+                                    <h2 class="blog-post-title"><%= data[i].principal%></h2>
+                                    <%}%>
+                                    <p><%- data[i].contenido%></p>
+                                    <div class="blog-post-share pull-left" style="display: flex">
+                                        <img src="<%= data[i].iconouser%>" style="margin: 0;height: 30px" width="30px" class="img-circle img-responsive">
+                                        <h5 style="margin-left: 10px"><%= data[i].username%></h5>
+                                    </div>
+                                    <div class="blog-post-date pull-right">
+                                        <p><%=f_gen%></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <%} else {%>
+                    <section class="blog-post" id="<%= data[i].idpost%>">
+                        <div class="alert alert-success" role="alert" style="display: flex ">
+                            <div  style="display: flex">
+                                <img src="<%= data[i].iconouser%>" style="margin: 0;height: 30px" width="30px" class="img-circle img-responsive">
+                                <h5 style="margin-left: 10px"><%= data[i].username%></h5>
+                            </div>
+                            <div class="cont" style="width: 70%;text-align: center">
+                                <p style="padding-left: 20%;padding-right: 20%;padding-top: 8px"><strong><%= data[i].principal%></strong></p>
+                                <div class="well" style="background-color: greenyellow;margin-top: 20px;color: #000;">
+                                    <%- data[i].contenido%>
+                                </div>
+                            </div>
+                            <div class="blog-post-date" style="display: flex">
+                                <p><%=f_gen%></p>
+                            </div>
+                        </div>
+                    </section>
+                    <%          }
+    }
+} else {%>
+<p> No hay Actualizaciones</p>
+<% } %>
+
+                </div>
+            </div>
+
+        </div><!-- /.blog-main -->
+        <div class="col-sm-4 blog-sidebar">
+
+            <div class="sidebar-module">
+                <div class="panel panel-default">
+                    <% if(gral.media != "no"){ %>
+                    <img src="<%= gral.media%>" width="auto" style="margin: auto;display: block;" class="img-responsive">
+                    <% } %>
+                    <div class="panel-body">
+                        <h4 class="text-center"><%= gral.titulo%></h4>
+                        <h6 class="text-center"><%= gral.descripcion%></h6>
+                        <br>
+                        <h4>Integrantes</h4>
+                        <% for(var j = 0;j<gral.usuarios.length;j++){%>
+                        <div class="text-center" style="display: flex;margin: 10px"><img src="<%= gral.usuarios[j][2]%>"  class="img-responsive img-circle" style="margin: 0; height: 30px" width="30px"> <p style="margin-left: 10px"><%= gral.usuarios[j][0]%></p></div>
+                        <%}%>
+                        <br>
+                        <% if(gral.etapa <= gral.etapas.length){%>
+                        <a class="btn btn-success" href="/lab/proy/sol/get/<%= gral.idproyecto%>">Ver soluciones</a>
+                        <%}%>
+                    </div>
+                </div>
+            </div><!-- /.sidebar-module -->
+
+        </div><!-- /.blog-sidebar -->
+
+
+<%- include layouts/proyect_footer.ejs %>

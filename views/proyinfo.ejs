@@ -1,0 +1,11 @@
+<h4 class="text-center"><%= gral.titulo%></h4>
+<h6 class="text-center"><%= gral.descripcion%></h6>
+<br>
+<h4>Integrantes</h4>
+<% for(var j = 0;j<gral.usuarios.length;j++){%>
+<div class="text-center" style="display: flex;margin: 10px"><img src="<%= gral.usuarios[j][2]%>"  class="img-responsive img-circle" style="margin: 0; height: 30px" width="30px"> <p style="margin-left: 10px"><%= gral.usuarios[j][0]%></p></div>
+<%}%>
+<br>
+<h5>Añadir un Integrante en esta etapa <span class="glyphicon <%if(gral.gotuser){%>glyphicon-ok<%} else {%>glyphicon-remove<%}%>"></span></h5>
+<br>
+<a class="btn btn-success" href="/lab/proy/sol/get/<%= gral.idproyecto%>">Ver Aportes</a>

@@ -1,0 +1,241 @@
+
+</div>
+</div>
+</div>
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+
+
+<button class="material-scrolltop primary" type="button"></button>
+
+<script src="/assets/js/jquery-min.js"></script>
+
+<link href="/assets/css/jquery-te-1.4.0.css" rel="stylesheet">
+<script src="/assets/js/jquery-te-1.4.0.min.js"></script>
+<script src="/assets/js/ripples.min.js"></script>
+<script src="/assets/js/material.min.js"></script>
+<script src="/assets/js/material-scrolltop.js"></script>
+<script src="/assets/js/main.js"></script>
+
+<script src="/assets/js/bootstrap.min.js"></script>
+<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+<script src="/assets/js/ie10-viewport-bug-workaround.js"></script>
+<!-- datepicker -->
+<script type="text/javascript" src="/assets/js/bootstrap-datepicker.min.js"></script>
+<script type="text/javascript" src="/assets/js/moment-with-locales.min.js"></script>
+<script type="text/javascript" src="/assets/js/transition.js"></script>
+<script type="text/javascript" src="/assets/js/collapse.js"></script><script type="text/javascript" src="/assets/js/bootstrap-datetimepicker.min.js"></script>
+<link rel="stylesheet" href="/assets/css/bootstrap-datetimepicker.min.css" >
+<script type="text/javascript">
+    var both = true;
+    $("ul.qcontrols li").click(function(){
+        // If this isn't already active
+        if (!$(this).hasClass("active")) {
+            // Remove the class from anything that is active
+            $("ul.qcontrols li.active").removeClass("active");
+            // And make this active
+            $(this).addClass("active");
+        }
+    });
+    $(document).on("click", ".poster", function() {
+        var data = {};
+        $("#t_princ").val("");
+        $("#editor").val("");
+        data.tipo = $(this).data('tipo');
+        $(".modal-footer #tipo").val(data.tipo);
+        switch(data.tipo) {
+            case 1:
+                $("#t_princ").attr("placeholder","Paz Mundial");
+                $("#preview").html("");
+                $("#fail").addClass("hidden");
+                $("#t_princ").removeClass("hidden");
+                break;
+            case 2:
+                $("#t_princ").attr("placeholder","Título");
+                $("#fail").addClass("hidden");
+                $("#preview").html("");
+                $("#t_princ").removeClass("hidden");
+                break;
+            case 3:
+                $("#preview").html("");
+                $("#t_princ").attr("placeholder","Url Imagen");
+                $("#t_princ").removeClass("hidden");
+                $("#fail").removeClass("hidden");
+                break;
+            case 4:
+                $("#preview").html("");
+                $("#t_princ").attr("placeholder","Url Video (sólo youtube)");
+                $("#fail").addClass("hidden");
+                $("#t_princ").removeClass("hidden");
+                break;
+            default:
+                status = "inactivo";
+        }
+    });
+
+    $(".blog-post-meta :input.hidden").each(function (j) {
+        var tagger = $(this).val();
+        var idpost = "#" + $(this).data('id');
+        tagger = tagger.split(",");
+        for(var i = 0; i < tagger.length;i++){
+            if(tagger[i] != "null") {
+                $(idpost + " .blog-post-meta").append('<span class="label label-light label-primary">' + tagger[i] + '</span> ');
+            } else $(idpost + " .blog-post-meta").append('<span class="label label-light label-primary">jeje</span> ');
+
+        }
+    });
+    $(".blog-post-share :input.hidden").each(function (j) {
+        var laiktoken = $(this).val();
+        var idpost = "#" + $(this).data('id');
+        if(laiktoken.indexOf("&"+ <%=usr.iduser%> +"&") != -1 || laiktoken == "fin"){
+            $(idpost + " .laik").removeClass("btn-inverse");
+            $(idpost + " .laik").addClass("btn-success");
+            $(idpost + " .laikp").removeClass("btn-inverse");
+            $(idpost + " .laikp").addClass("btn-success");
+        }
+    });
+    $.material.init();
+    $('body').materialScrollTop();
+
+    $(function () {
+        $("#editor").jqte({
+            color: false,
+            source: false,
+            sub: false,
+            sup: false,
+            strike: false,
+            indent: false,
+            format: false,
+            outdent: false
+        });
+        $("#editor2").jqte({
+            color: false,
+            source: false,
+            sub: false,
+            sup: false,
+            strike: false,
+            indent: false,
+            format: false,
+            outdent: false
+        });
+        $(".comm").click(function (e) {
+            var data = {};
+            data.idpost = $(this).data('id');
+            var like = $(this);
+            $.ajax({
+                type: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                url: '/lab/intern/comment_stream',
+                success: function(data) {
+                    $("#"+like.data('id') + " .panel-footer").html(data);
+                    $("#"+like.data('id') + " .panel-footer").removeClass("hidden");
+                    like.html('<i class="glyphicon glyphicon-refresh"></i>');
+                }
+            });
+        });
+        $('.laik').click(function(e){
+            /*$.ajax({
+             dataType: 'jsonp',
+             data: "data=yeah",
+             jsonp: 'callback',
+             url: 'http://localhost:3000/endpoint?callback=?',
+             success: function(data) {
+             console.log('success');
+             console.log(JSON.stringify(data));
+             }
+             });*/
+            var data = {};
+            data.idpost = $(this).data('id');
+            var like = $(this);
+            $.ajax({
+                type: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                url: '/lab/intern/laik_intern',
+                success: function(data) {
+                    if(data != "no"){
+                        like.html(data.html);
+                        like.removeClass("btn-success");
+                        like.removeClass("btn-inverse");
+                        like.addClass(data.newlaik);
+                        if(data.alert == "newuser"){
+                            loadinfo(like.data('id'));
+                        } else if(data.alert == "rdy"){
+                            location.reload();
+                        }
+                    }
+                }
+            });
+            e.preventDefault();
+            /*$.ajax('http://localhost:3000/endpoint', {
+             type: 'POST',
+             data: JSON.stringify(data),
+             contentType: 'application/json',
+             success: function() { console.log('success');},
+             error  : function() { console.log('error');}
+             });*/
+        });
+
+    });
+    function loadinfo(idpost){
+        var data ={idpost: idpost}
+        $.ajax({
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            url: '/lab/proy/render_proyinfo',
+            success: function(data){
+                $("#proyinfo").html(data);
+            }
+        });
+    }
+    function upload(e){
+
+        if (!e.files) {
+            alert("This browser doesn't seem to support the `files` property of file inputs.");
+        }
+        else if (!e.files[0]) {
+            alert("Porfavor seleccione algún archivo");
+            $("#media").val("no");
+            $("#preview").html("");
+        }
+        else {
+            var formData = new FormData();
+            formData.append("filetoupload", e.files[0]);
+            $(function (){
+                $.ajax({
+                    url: '/subir_pic',
+                    data: formData,
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    type: 'POST',
+                    success: function(data){
+                        $("#preview").html("<img width='auto' class='img-responsive' src='" + data + "' >");
+                        $("#media").val(data);
+                        $("#t_princ").val(data);
+                        $("#t_princ").addClass("hidden");
+                    }
+                })
+            });
+        }
+
+    }
+</script>
+<script>
+
+    function enable2() {
+        document.getElementById("myBtn1").disabled = false;
+        document.getElementById("del").className = "btn btn-primary btn-danger btn-lg deljump";
+    }
+    function enable() {
+        document.getElementById("del").className = "btn btn-primary deljump btn-danger";
+        document.getElementById("add").disabled = false;
+        document.getElementById("continuar").disabled = false;
+    }
+</script>
+
+</body>
+</html>

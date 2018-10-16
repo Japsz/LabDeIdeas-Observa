@@ -1,0 +1,147 @@
+<%- include layouts/proyect_header.ejs %>
+
+<div class="container blog-content">
+    <h3 class="page-header">Soluciones</h3>
+    <ol class="breadcrumb">
+        <li><a href="/lab/proy/proy_cdd">Mis Proyectos</a></li>
+        <li><a href="/lab/proy/get/<%= gral.idproyecto%>" ><%= gral.titulo%></a></li>
+        <li class="active">Soluciones</li>
+    </ol>
+    <div class="row">
+        <div class="col-sm-8 blog-main">
+            <div class="row">
+                <div class="col-sm-12">
+<% if(data.length) {
+    var f_gen;
+    for(var i = 0;i<data.length;i++){
+        f_gen = new Date(data[i].fecha);
+        f_gen = f_gen.toLocaleString(); %>
+                    <section class="blog-post" id="<%= data[i].idsolucion%>">
+                        <div class="panel panel-primary">
+                            <div class="panel-body">
+                                <div class="blog-post-content">
+                                    <h4 class="text-center"><%- data[i].contenido%></h4>
+                                    <div class="blog-post-share pull-left" style="display: flex">
+                                        <img src="<%= data[i].iconouser%>" style="margin: 0;height: 30px" width="30px" class="img-circle img-responsive">
+                                        <h5 style="margin-left: 10px"><%= data[i].username%></h5>
+                                    </div>
+                                    <div class="blog-post-share pull-right">
+                                        <a href="#" data-toggle="modal" data-target="#sendsol" data-idsol="<%= data[i].idsolucion%>" class="btn btn-border postsol">
+                                        <span class="glyphicon glyphicon-pushpin"></span> Pegar en el muro</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="panel-footer"><p>Etapa: <%= data[i].etapa%> | <%=f_gen%></p></div>
+                            <div class="exito"></div>
+                        </div>
+                    </section>
+<%
+    }
+} else {%>
+<p> No hay Soluciones</p>
+<% } %>
+                    <div id="next">
+                        <nav>
+                            <ul class="pager">
+                                <input type="hidden" value="<% if(data.length){%><%= data[data.length-1].idpost%><%}%>" id="idpst">
+                                <li><a class="withripple strim" href="#">Más</a></li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /.blog-main -->
+        <div class="col-sm-4 blog-sidebar">
+
+            <div class="sidebar-module">
+                <div class="panel panel-default">
+                    <% if(gral.media != "no"){ %>
+                    <img src="<%= gral.media%>" width="auto" style="margin: auto;display: block;" class="img-responsive">
+                    <% } %>
+                    <div class="panel-body">
+                        <h4 class="text-center"><%= gral.titulo%></h4>
+                        <h6 class="text-center"><%= gral.descripcion%></h6>
+                        <br>
+                        <h4>Integrantes</h4>
+                        <% for(var j = 0;j<gral.usuarios.length;j++){%>
+                        <div class="text-center" style="display: flex;margin: 10px"><img src="<%= gral.usuarios[j][2]%>"  class="img-responsive img-circle" style="margin: 0; height: 30px" width="30px"> <p style="margin-left: 10px"><%= gral.usuarios[j][0]%></p></div>
+                        <%}%>
+                        <br>
+                        <a class="btn btn-primary" href="/lab/intern/show/<%=gral.idproyecto%>">Muro Interno</a>
+                    </div>
+                </div>
+            </div><!-- /.sidebar-module -->
+
+        </div><!-- /.blog-sidebar -->
+        <div class="modal fade" id="sendsol" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h2 class="modal-title" id="myModalLabel">Postear en muro interno</h2>
+                    </div>
+                    <form id="sform">
+                        <div class="modal-body">
+                            <h4>¿Quieres agregar una opinión?</h4>
+                            <div class="form-group">
+                                <input type="text" name="texto2" class="hidden" id="editor2">
+                            </div>
+                            <p>Una vez que esté en el muro interno, podrán votar para agregar al creador del aporte como integrante del proyecto</p>
+                        </div>
+                        <div class="modal-footer">
+                            <input type="hidden" value="" id="idsol" name="idsol">
+                            <input name="tipo" value="2" type="hidden" id="tipo">
+                            <div class="form-group form-inline">
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                    <button type="button" data-dismiss="modal" id="send" class="btn btn-primary">Proponer</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript">
+
+            $(function(){
+                $(".postsol").click(function(){
+                    var idsol = $(this).data('idsol');
+                    $("#idsol").val(idsol);
+                })
+               $("#send").click(function (e) {
+                   e.preventDefault();
+                    var data={};
+                    data.tipo = $("#tipo").val();
+                    data.texto2=$("#editor2").val();
+                    data.idsol=$("#idsol").val();
+
+                    $.ajax({
+                       type: 'POST',
+                       data: JSON.stringify(data),
+                       contentType: 'application/json',
+                       url: '/lab/intern/postsol',
+                       success: function(data) {
+                           if(data == "si"){
+                               $("#sform").trigger('reset');
+                               $('#'+ $("#idsol").val() + " .exito").html("<div class='alert alert-success'>");
+                               $('#'+ $("#idsol").val() + ' .exito > .alert-success')
+                                   .append("<strong>Bien!</strong> se posteó en el muro interno.");
+                               $('#'+ $("#idsol").val() + ' .exito > .alert-success')
+                                   .append('</div>');
+                               $('#'+ $("#idsol").val() + " .exito").fadeTo(2000, 500).slideUp(500, function(){
+                                   $('#'+ $("#idsol").val() + " .exito").slideUp(500);
+                               });
+                           } else {
+                               $('#'+ $("#idsol").val() + " .exito").html("<div class='alert alert-danger'><strong>Rayos!</strong> hubo un error al mandar el post</div>");
+                           }
+                       }
+                    });
+               });
+            });
+        </script>
+
+
+<%- include layouts/proyect_footer.ejs %>
