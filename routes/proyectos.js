@@ -228,7 +228,7 @@ router.post('/sol/add',function(req, res){
         });
     } else res.redirect('/bad_login');
 });
-router.get('/get/:idproy',function(req, res){
+router.get('/sol/get/:idproy',function(req, res){
     var int = "show_sol";
     if(req.session.isUserLogged){
         req.getConnection(function(err,connection){
