@@ -57,7 +57,7 @@
                         <br>
                         <h4>Integrantes</h4>
                         <% for(var j = 0;j<gral.usuarios.length;j++){%>
-                        <div class="text-center" style="display: flex;margin: 10px"><img src="<%= gral.usuarios[j][2]%>"  class="img-responsive img-circle" style="margin: 0; height: 30px" width="30px"> <p style="margin-left: 10px"><%= gral.usuarios[j][0]%></p></div>
+                        <div class="text-center" style="display: flex;margin: 10px"><img src="<%= gral.usuarios[j][2]%>"  class="img-responsive img-circle" style="margin: 0; height: 30px" width="30px"> <p style="margin-left: 10px"><%= gral.usuarios[j][0]%></p><span class="label label-light label-primary" style="margin-left: 4px"><%= gral.usuarios[j][3]%></span></div>
                         <%}%>
                         <br>
                         <a class="btn btn-success poster" data-toggle="modal" data-target="#aa" data-tipo="<%= gral.etapa%>">Aportar al proyecto</a>
