@@ -123,7 +123,7 @@ router.get('/show/:idproy', function(req, res){
                         }
                     }
                 }
-                connection.query('SELECT group_concat(user.username , "@" , user.iduser, "@", user.avatar_pat) as usuarios,proyecto.*,etapa.token,evento.likes' +
+                connection.query('SELECT group_concat(user.username , "@" , user.iduser, "@", user.avatar_pat, "@", userproyecto.flag) as usuarios,proyecto.*,etapa.token,evento.likes' +
                     ' FROM proyecto LEFT JOIN userproyecto ON userproyecto.idproyecto = proyecto.idproyecto LEFT JOIN user ON user.iduser = userproyecto.iduser' +
                     ' LEFT JOIN etapa ON proyecto.idevento = etapa.idevento AND etapa.nro = proyecto.etapa LEFT JOIN evento ON evento.idevento = proyecto.idevento' +
                     ' WHERE proyecto.idproyecto = ? GROUP BY etapa.token',req.params.idproy,function(err,rows)

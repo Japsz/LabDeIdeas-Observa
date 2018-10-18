@@ -75,7 +75,7 @@ router.post('/add',function(req,res){
 
                                     if (err)
                                         console.log("Error inserting : %s ",err );
-                                    connection.query("INSERT INTO userproyecto SET ? ",[{iduser:req.session.user.iduser,idproyecto: postid,etapa: 0}], function(err, rows)
+                                    connection.query("INSERT INTO userproyecto SET ? ",[{iduser:req.session.user.iduser,idproyecto: postid,etapa: 0,flag: 'Creador'}], function(err, rows)
                                     {
 
                                         if (err)
@@ -105,7 +105,7 @@ router.post('/add',function(req,res){
 
                             });
                         } else {
-                            connection.query("INSERT INTO userproyecto SET ? ",[{iduser:req.session.user.iduser,idproyecto: postid,etapa: 0}], function(err, rows)
+                            connection.query("INSERT INTO userproyecto SET ? ",[{iduser:req.session.user.iduser,idproyecto: postid,etapa: 0,flag: 'Creador'}], function(err, rows)
                             {
 
                                 if (err)
@@ -128,7 +128,7 @@ router.get('/proy_cdd',function(req, res){
             connection.query('SELECT proyecto.*,GROUP_CONCAT(DISTINCT tags.tag ORDER BY tags.tag) AS tagz FROM' +
                 ' proyecto LEFT JOIN tagproyecto ON proyecto.idproyecto = tagproyecto.idproyecto LEFT JOIN tags ON tagproyecto.idtag = tags.idtag' +
                 ' LEFT JOIN userproyecto ON proyecto.idproyecto = userproyecto.idproyecto LEFT JOIN user ON user.iduser = userproyecto.iduser' +
-                ' WHERE user.iduser = ? GROUP BY proyecto.idproyecto ORDER BY proyecto.actualizado DESC',req.session.user.iduser,function(err,rows)
+                ' WHERE user.iduser = ? GROUP BY proyecto.idproyecto ORDER BY proyecto.actualizado DESC',[req.session.user.iduser],function(err,rows)
             {
                 if(err)
                     console.log("Error Selecting : %s ",err );
@@ -151,7 +151,7 @@ router.get('/get/:idproy',function(req, res){
                 if(err)
                     console.log("Error Selecting : %s ",err );
                 var acts = rows;
-                connection.query('SELECT group_concat(DISTINCT user.username , "@" , user.iduser, "@", user.avatar_pat) as usuarios,proyecto.*,GROUP_CONCAT(DISTINCT etapa.nombre ORDER BY etapa.nro ASC) as etapas FROM proyecto LEFT JOIN userproyecto ON userproyecto.idproyecto = proyecto.idproyecto' +
+                connection.query('SELECT group_concat(DISTINCT user.username , "@" , user.iduser, "@", user.avatar_pat,"@",userproyecto.flag) as usuarios,proyecto.*,GROUP_CONCAT(DISTINCT etapa.nombre ORDER BY etapa.nro ASC) as etapas FROM proyecto LEFT JOIN userproyecto ON userproyecto.idproyecto = proyecto.idproyecto' +
                     ' LEFT JOIN user ON user.iduser = userproyecto.iduser LEFT JOIN etapa ON etapa.idevento = proyecto.idevento WHERE proyecto.idproyecto = ? GROUP BY proyecto.idproyecto',req.params.idproy,function(err,rows)
                 {
                     if(err)
@@ -222,7 +222,7 @@ router.post('/sol/add',function(req, res){
             {
                 if(err)
                     console.log("Error Selecting : %s ",err );
-                res.redirect('/sol/get/' + input.idproy);
+                res.redirect('/lab/proy/sol/get/' + input.idproy);
                 //console.log(query.sql);
             });
         });
@@ -239,7 +239,7 @@ router.get('/sol/get/:idproy',function(req, res){
                 if(err)
                     console.log("Error Selecting : %s ",err );
                 var acts = rows;
-                connection.query('SELECT group_concat(user.username , "@" , user.iduser, "@", user.avatar_pat) as usuarios,proyecto.*,' +
+                connection.query('SELECT group_concat(user.username , "@" , user.iduser, "@", user.avatar_pat, "@", userproyecto.flag) as usuarios,proyecto.*,' +
                     'etapa.token FROM proyecto LEFT JOIN userproyecto ON userproyecto.idproyecto = proyecto.idproyecto LEFT JOIN user ON user.iduser = userproyecto.iduser' +
                     ' LEFT JOIN etapa ON etapa.idevento = proyecto.idevento AND etapa.nro = proyecto.etapa WHERE proyecto.idproyecto = ? GROUP BY etapa.token',req.params.idproy,function(err,rows)
                 {
@@ -334,7 +334,7 @@ router.post('/render_proyinfo', function(req,res){
         var input = JSON.parse(JSON.stringify(req.body));
 
         req.getConnection(function(err,connection){
-            connection.query('SELECT group_concat(DISTINCT user.username , "@" , user.iduser, "@", user.avatar_pat) as usuarios,proyecto.*,evento.likes FROM postinterno RIGHT JOIN proyecto ON postinterno.idproyecto = proyecto.idproyecto' +
+            connection.query('SELECT group_concat(DISTINCT user.username , "@" , user.iduser, "@", user.avatar_pat, "@", userproyecto.flag) as usuarios,proyecto.*,evento.likes FROM postinterno RIGHT JOIN proyecto ON postinterno.idproyecto = proyecto.idproyecto' +
                 ' LEFT JOIN userproyecto ON userproyecto.idproyecto = proyecto.idproyecto LEFT JOIN user ON user.iduser = userproyecto.iduser LEFT JOIN evento ON proyecto.idevento = evento.idevento WHERE postinterno.idpostinterno = ? GROUP BY proyecto.idproyecto',input.idpost,function(err,rows)
             {
                 if(err)
