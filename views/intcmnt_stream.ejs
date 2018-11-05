@@ -1,4 +1,5 @@
 <h2 class="blog-post-title">Comentarios</h2>
+    <% if(!admin){%>
     <form id="cmntform">
         <div class="well" style="display: flex;margin:auto;height:150px">
             <img class="img-responsive img-circle pull-left" style="margin-top: 0;display: block" width="60px" height="auto" src="<%= usr.avatar_pat%>">
@@ -7,6 +8,7 @@
         </div>
     </form>
     <hr>
+    <%}%>
     <% if(comments.length) {
         var f_gen;
     for(var i = 0; i < comments.length; i++){

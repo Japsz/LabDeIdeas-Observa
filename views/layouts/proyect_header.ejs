@@ -80,7 +80,8 @@
             </button>
         </div>
         <div class="navbar-collapse collapse navbar-responsive-collapse">
-            <a href="/indx"><img class="navbar-brand" src="/assets/img/isov_iso.png"></a>
+            <a href="/"><img class="navbar-brand" src="/assets/img/isov_iso.png"></a>
+            <% if(!admin){%>
             <ul class="nav navbar-nav">
                 <li class="active dropdown">
                 <li class="dropdown">
@@ -95,6 +96,7 @@
                 <li><img class="navbar-link navbar-brand img-circle material-icons" style="margin: auto;display: block;" src="<%= usr.avatar_pat%>"></li>
                 <li><a href="/user_logout" class="navbar-link">Salir</a></li>
             </ul>
+            <%}%>
         </div>
     </div>
 </div>

@@ -15,7 +15,7 @@ router.use(
 
     },'pool')
 );
-
+// Postear una solución al muro interno
 router.post('/postsol', function(req, res){
     if(req.session.isUserLogged){
         var input = JSON.parse(JSON.stringify(req.body));
@@ -43,6 +43,7 @@ router.post('/postsol', function(req, res){
         });
     } else res.redirect('/bad_login');
 });
+// Enviar propuesta de avance a Administrador
 router.post('/progress', function(req,res){
     var input = JSON.parse(JSON.stringify(req.body));
     if(req.session.isUserLogged){
@@ -59,9 +60,10 @@ router.post('/progress', function(req,res){
         });
     } else res.redirect('/bad_login');
 });
+// Cargar comentarios de muro interno
 router.post('/comment_stream', function(req, res){
     var input = JSON.parse(JSON.stringify(req.body));
-    if(req.session.isUserLogged){
+    if(req.session.isUserLogged || req.session.isAdminLogged){
         req.getConnection(function(err,connection){
 
             connection.query('SELECT comentinterno.*,user.username,user.avatar_pat FROM comentinterno INNER JOIN user ON user.iduser = comentinterno.iduser' +
@@ -69,8 +71,9 @@ router.post('/comment_stream', function(req, res){
             {
                 if(err)
                     console.log("Error Selecting : %s ",err );
+                if(req.session.isAdminLogged) res.render('intcmnt_stream',{data:input.idpost,usr:req.session.user,comments : rows,admin:true})
+                else res.render('intcmnt_stream',{data:input.idpost,usr:req.session.user,comments : rows,admin:false});
 
-                res.render('intcmnt_stream',{data:input.idpost,usr:req.session.user,comments : rows});
 
                 //console.log(query.sql);
             });
@@ -78,6 +81,7 @@ router.post('/comment_stream', function(req, res){
         });
     } else res.redirect('/bad_login');
 });
+// Añadir proyectos al muro interno
 router.post('/comment/add', function (req,res) {
     if(req.session.isUserLogged){
         var input = JSON.parse(JSON.stringify(req.body));
@@ -102,12 +106,13 @@ router.post('/comment/add', function (req,res) {
         });
     } else res.redirect('/bad_login');
 });
+// Ver posts del muro interno para un proyecto en específico
 router.get('/show/:idproy', function(req, res){
     var int = false;
-    if(req.session.isUserLogged){
+    if(req.session.isUserLogged || req.session.isAdminLogged){
         req.getConnection(function(err,connection){
 
-            connection.query('SELECT postinterno.*,user.username,user.avatar_pat as iconouser FROM postinterno INNER JOIN user ON user.iduser = postinterno.iduser WHERE postinterno.idproyecto = ? GROUP BY postinterno.idpostinterno ORDER BY postinterno.fecha DESC LIMIT 10',req.params.idproy,function(err,rows)
+            connection.query('SELECT postinterno.*,user.username,COALESCE(user.avatar_pat,"/assets/img/placeholder.png") as iconouser FROM postinterno INNER JOIN user ON user.iduser = postinterno.iduser WHERE postinterno.idproyecto = ? GROUP BY postinterno.idpostinterno ORDER BY postinterno.fecha DESC LIMIT 10',req.params.idproy,function(err,rows)
             {
                 if(err)
                     console.log("Error Selecting : %s ",err );
@@ -123,7 +128,7 @@ router.get('/show/:idproy', function(req, res){
                         }
                     }
                 }
-                connection.query('SELECT group_concat(user.username , "@" , user.iduser, "@", user.avatar_pat, "@", userproyecto.flag) as usuarios,proyecto.*,etapa.token,evento.likes' +
+                connection.query('SELECT group_concat(user.username , "@" , user.iduser, "@", COALESCE(user.avatar_pat,"/assets/img/placeholder.png"), "@", userproyecto.flag) as usuarios,proyecto.*,etapa.token,evento.likes' +
                     ' FROM proyecto LEFT JOIN userproyecto ON userproyecto.idproyecto = proyecto.idproyecto LEFT JOIN user ON user.iduser = userproyecto.iduser' +
                     ' LEFT JOIN etapa ON proyecto.idevento = etapa.idevento AND etapa.nro = proyecto.etapa LEFT JOIN evento ON evento.idevento = proyecto.idevento' +
                     ' WHERE proyecto.idproyecto = ? GROUP BY etapa.token',req.params.idproy,function(err,rows)
@@ -141,8 +146,10 @@ router.get('/show/:idproy', function(req, res){
                         connection.query("SELECT GROUP_CONCAT(etapa.nombre ORDER BY etapa.nro ASC) as etapas FROM proyecto RIGHT JOIN etapa ON proyecto.idevento = etapa.idevento WHERE proyecto.idproyecto = ? GROUP BY proyecto.idproyecto",req.params.idproy,function(err,etapas){
                             if(err)
                                 console.log("Error Selecting : %s ",err );
-                            if(int)
-                                res.render("muro",{data :psts,gral : rows[0], usr:req.session.user,etapas: etapas[0].etapas.split(",")});
+                            if(req.session.isAdminLogged){
+                                res.render("muro",{data :psts,gral : rows[0], usr:req.session.user,etapas: etapas[0].etapas.split(","),admin:true});
+                            } else if(int)
+                                res.render("muro",{data :psts,gral : rows[0], usr:req.session.user,etapas: etapas[0].etapas.split(","),admin:false});
                             else res.redirect('/bad_login');
                         });
                     }
@@ -154,6 +161,7 @@ router.get('/show/:idproy', function(req, res){
         });
     } else res.redirect('/bad_login');
 });
+// Crear un post en el muro interno de un proyecto
 router.post('/intern/add', function(req, res){
     if(req.session.isUserLogged){
         var input = JSON.parse(JSON.stringify(req.body));
@@ -179,6 +187,7 @@ router.post('/intern/add', function(req, res){
         });
     } else res.redirect('/bad_login');
 });
+// Darle like a un post del muro interno.
 router.post('/laik_intern',function (req, res) {
     if(req.session.isUserLogged){
         var input = JSON.parse(JSON.stringify(req.body));
