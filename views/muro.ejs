@@ -12,13 +12,16 @@
 <div class="container blog-content">
     <h3 class="page-header">Muro Interno</h3>
     <ol class="breadcrumb">
+        <% if(!admin){%>
         <li><a href="/lab/proy/proy_cdd">Mis Proyectos</a></li>
+        <%}%>
         <li><a href="/lab/proy/get/<%= gral.idproyecto%>" ><%= gral.titulo%></a></li>
         <li class="active">Muro Interno</li>
     </ol>
     <div class="row">
 
         <div class="col-sm-8 blog-main">
+            <% if(!admin){%>
             <ul class="menu boxed clearfix modalpost" aria-hidden="true">
                 <li><img src="/assets/img/isov_iso.png" height="84px" height="auto"></li>
                 <li><a href="#" data-toggle="modal" data-target="#aa" data-tipo="1" class="postint"><i class="menu-icon menu-icon-5"></i>Escrito</a></li>
@@ -28,6 +31,7 @@
                 </li>
                 <%}%>
             </ul>
+            <%}%>
             <div class="row">
                 <div class="col-sm-12">
                     <% if(data.length) {
@@ -116,7 +120,7 @@
                                     <% if(gral.etapa <= etapas.length){%>
 
                                     <div class="blog-post-share pull-right" style="display: flex">
-                                        <% if(data[i].tipo == 3 || data[i].tipo == 5){%>
+                                        <% if(data[i].tipo == 3 || data[i].tipo == 5 && !admin){%>
                                         <a class="redit btn btn-primary hidden" data-toggle="modal" data-target="#aa" data-tipo="3" data-prim="<%= data[i].texto1%>" data-sec="<%= data[i].texto2%>"  href="#">
                                             <i class="glyphicon glyphicon-edit"></i> Reeditar
                                         </a>
@@ -124,7 +128,7 @@
                                         <a class="comm btn btn-info" data-id="<%= data[i].idpostinterno%>" href="#">
                                             <i class="glyphicon glyphicon-comment"></i> Comentar
                                         </a>
-                                        <% if(data[i].tipo == 2 || data[i].tipo == 3){%>
+                                        <% if(data[i].tipo == 2 || data[i].tipo == 3 && !admin){%>
                                         <input type="hidden" class="hidden" name="laiktoken" data-id="<%= data[i].idpostinterno%>" value="<%=data[i].laiks%>">
                                         <a class="laik btn btn-inverse" data-id="<%= data[i].idpostinterno%>" href="#">
                                             <% if(data[i].laiks == "fin"){ %>
@@ -134,7 +138,7 @@
                                             <%}%>
                                         </a>
                                         <%}%>
-                                        <% if(data[i].tipo == 3 && data[i].laiks == "fin" && gral.gotuser && gral.idcreador == usr.iduser){%>
+                                        <% if(data[i].tipo == 3 && data[i].laiks == "fin" && gral.gotuser && gral.idcreador == usr.iduser && !admin){%>
                                             <a class="btn btn-success sendprogress" href="#" data-id="<%=data[i].idpostinterno%>">Enviar a aprobación</a>
                                             <script type="text/javascript">
                                                 $(document).on("click",".sendprogress",function(){
@@ -167,7 +171,7 @@
                     </section><%
     }
 } else {%>
-<p> No hay proyectos</p>
+<p> No hay posts en el muro interno</p>
 <% } %>
                 </div>
             </div>
@@ -187,7 +191,7 @@
                         <div class="text-center" style="display: flex;margin: 10px"><img src="<%= gral.usuarios[j][2]%>"  class="img-responsive img-circle" style="margin: 0; height: 30px" width="30px"> <p style="margin-left: 10px"><%= gral.usuarios[j][0]%></p><span class="label label-light label-primary" style="margin-left: 4px"><%= gral.usuarios[j][3]%></span></div>
                         <%}%>
                         <br>
-                        <% if(gral.etapa <= etapas.length){%>
+                        <% if(gral.etapa <= etapas.length && !admin){%>
                         <h5>Añadir un Integrante en esta etapa <span class="glyphicon <%if(gral.gotuser){%>glyphicon-ok<%} else {%>glyphicon-remove<%}%>"></span></h5>
                         <br>
                         <a class="btn btn-success" href="/lab/proy/sol/get/<%= gral.idproyecto%>">Ver Aportes</a>

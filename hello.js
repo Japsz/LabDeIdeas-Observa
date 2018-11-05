@@ -40,7 +40,7 @@ app.use(cookieSession({
     keys: ['usuarios']
 }));
 
-
+app.use("/", index);
 app.use('/lab', index);
 app.use('/lab/proy', proyect);
 app.use('/lab/intern',intern);

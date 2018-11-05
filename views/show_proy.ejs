@@ -108,7 +108,10 @@ if(data[i].tipo < 5){%>
                         <br>
                         <% if(gral.etapa <= gral.etapas.length){%>
                         <a class="btn btn-success" href="/lab/proy/sol/get/<%= gral.idproyecto%>">Ver soluciones</a>
-                        <%}%>
+                        <% if(admin){%>
+                        <a class="btn btn-success" href="/lab/intern/show/<%= gral.idproyecto%>">Muro Interno</a>
+                        <% }
+                        }%>
                     </div>
                 </div>
             </div><!-- /.sidebar-module -->

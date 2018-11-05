@@ -28,19 +28,12 @@
                             <div class="panel-footer"><p>Etapa: <%= data[i].etapa%> | <%=f_gen%></p></div>
                         </div>
                     </section>
-<%
+                    <%
     }
 } else {%>
 <p> No hay posts</p>
 <% } %>
-                    <div id="next">
-                        <nav>
-                            <ul class="pager">
-                                <input type="hidden" value="<% if(data.length){%><%= data[data.length-1].idpost%><%}%>" id="idpst">
-                                <li><a class="withripple strim" href="#">Más</a></li>
-                            </ul>
-                        </nav>
-                    </div>
+
                 </div>
             </div>
 
@@ -60,7 +53,11 @@
                         <div class="text-center" style="display: flex;margin: 10px"><img src="<%= gral.usuarios[j][2]%>"  class="img-responsive img-circle" style="margin: 0; height: 30px" width="30px"> <p style="margin-left: 10px"><%= gral.usuarios[j][0]%></p><span class="label label-light label-primary" style="margin-left: 4px"><%= gral.usuarios[j][3]%></span></div>
                         <%}%>
                         <br>
+                        <% if(!admin){%>
                         <a class="btn btn-success poster" data-toggle="modal" data-target="#aa" data-tipo="<%= gral.etapa%>">Aportar al proyecto</a>
+                        <%} else {%>
+                        <a class="btn btn-success" href="/lab/intern/show/<%= gral.idproyecto%>">Muro Interno</a>
+                        <%}%>
                     </div>
                 </div>
             </div><!-- /.sidebar-module -->

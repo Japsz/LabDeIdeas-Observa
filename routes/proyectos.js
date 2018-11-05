@@ -15,6 +15,28 @@ router.use(
 
     },'pool')
 );
+// Lógica ver todos los proyectos (página principal)
+router.get('/',function(req, res){
+    if(req.session.isUserLogged){
+        req.getConnection(function(err,connection){
+            if(err){
+                console.log("Error Connecting : %s ",err );
+            }
+            connection.query('SELECT proyecto.*,user.username,COALESCE(user.avatar_pat,"/assets/img/placeholder.png") as iconouser,GROUP_CONCAT(DISTINCT tags.tag ORDER BY tags.tag) AS tagz,' +
+                ' GROUP_CONCAT(DISTINCT proylike.iduser SEPARATOR "&&") as proylaik, COUNT(DISTINCT proylike.iduser) as lenlaik FROM' +
+                ' proyecto LEFT JOIN tagproyecto ON proyecto.idproyecto = tagproyecto.idproyecto LEFT JOIN tags ON tagproyecto.idtag = tags.idtag' +
+                ' INNER JOIN user ON user.iduser = proyecto.idcreador LEFT JOIN proylike ON proylike.idproyecto = proyecto.idproyecto' +
+                ' GROUP BY proyecto.idproyecto ORDER BY proyecto.actualizado DESC LIMIT 12',function(err,rows)
+            {
+                if(err)
+                    console.log("Error Selecting : %s ",err );
+                res.render('proyect_indx',{data :rows, usr:req.session.user,admin:false});
+
+                //console.log(query.sql);
+            });
+        });
+    } else res.redirect('/bad_login');
+});
 // Lógica Crear Proyecto
 router.post('/add',function(req,res){
     if(req.session.isUserLogged){
@@ -121,6 +143,7 @@ router.post('/add',function(req,res){
         });
     }
 });
+// Lógica ver mis proyectos "como ciudadano"
 router.get('/proy_cdd',function(req, res){
     if(req.session.isUserLogged){
         req.getConnection(function(err,connection){
@@ -132,41 +155,54 @@ router.get('/proy_cdd',function(req, res){
             {
                 if(err)
                     console.log("Error Selecting : %s ",err );
-                res.render('my_proy',{data :rows, usr:req.session.user});
+                res.render('my_proy',{data :rows, usr:req.session.user,admin: false});
 
                 //console.log(query.sql);
             });
         });
     } else res.redirect('/bad_login');
 });
+// Lógica ver muro público del proyecto
 router.get('/get/:idproy',function(req, res){
-    var int = "show_proy";
+    var int = "show_proy"; // Inicia con la versión pública del muro
+    if(req.session.isUserLogged || req.session.isAdminLogged){
 
-    if(req.session.isUserLogged){
         req.getConnection(function(err,connection){
 
-            connection.query('SELECT actualizacion.*,user.username,user.avatar_pat as iconouser FROM actualizacion LEFT JOIN user ON user.iduser = actualizacion.iduser WHERE actualizacion.idproyecto = ?' +
+            connection.query('SELECT actualizacion.*,user.username,COALESCE(user.avatar_pat,"/assets/img/placeholder.png") as iconouser FROM actualizacion LEFT JOIN user ON user.iduser = actualizacion.iduser WHERE actualizacion.idproyecto = ?' +
                 ' GROUP BY actualizacion.idactualizacion ORDER BY actualizacion.fecha DESC',req.params.idproy,function(err,rows)
             {
                 if(err)
                     console.log("Error Selecting : %s ",err );
                 var acts = rows;
-                connection.query('SELECT group_concat(DISTINCT user.username , "@" , user.iduser, "@", user.avatar_pat,"@",userproyecto.flag) as usuarios,proyecto.*,GROUP_CONCAT(DISTINCT etapa.nombre ORDER BY etapa.nro ASC) as etapas FROM proyecto LEFT JOIN userproyecto ON userproyecto.idproyecto = proyecto.idproyecto' +
+                connection.query('SELECT group_concat(DISTINCT user.username , "@" , user.iduser, "@", COALESCE(user.avatar_pat,"/assets/img/placeholder.png"),"@",userproyecto.flag) as usuarios,proyecto.*,GROUP_CONCAT(DISTINCT etapa.nombre ORDER BY etapa.nro ASC) as etapas FROM proyecto LEFT JOIN userproyecto ON userproyecto.idproyecto = proyecto.idproyecto' +
                     ' LEFT JOIN user ON user.iduser = userproyecto.iduser LEFT JOIN etapa ON etapa.idevento = proyecto.idevento WHERE proyecto.idproyecto = ? GROUP BY proyecto.idproyecto',req.params.idproy,function(err,rows)
                 {
                     if(err)
                         console.log("Error Selecting : %s ",err );
                     if(rows.length){
+                        console.log(rows);
                         rows[0].usuarios = rows[0].usuarios.split(",");
                         rows[0].etapas = rows[0].etapas.split(",");
+                        //Revisar si soy integrante en el proyecto conseguido
                         for(var i = 0; i<rows[0].usuarios.length;i++){
                             rows[0].usuarios[i] = rows[0].usuarios[i].split("@");
                             if(rows[0].usuarios[i][1] == req.session.user.iduser){
+                                //Setear la vista del muro a la versión de integrante
                                 int = "mod_proy";
                             }
                         }
-                        res.render(int,{data :acts,gral : rows[0], usr:req.session.user});
-                    }
+                        if(req.session.isAdminLogged){
+                            res.render(int,{data :acts,gral : rows[0], usr:req.session.user,admin:true},function(err,html){
+                                if(err)console.log(err);
+                                res.send(html);
+                            });
+                        } else
+                        res.render(int,{data :acts,gral : rows[0], usr:req.session.user,admin:false},function(err,html){
+                            if(err)console.log(err);
+                            res.send(html);
+                        });
+            }
 
                 });
 
@@ -175,6 +211,7 @@ router.get('/get/:idproy',function(req, res){
         });
     } else res.redirect('/bad_login');
 });
+// Añadir actualización pública a un proyecto (sólo para integrantes del proyecto donde se crea)
 router.post('/act/add',function(req, res){
     if(req.session.isUserLogged){
         var input = JSON.parse(JSON.stringify(req.body));
@@ -206,6 +243,7 @@ router.post('/act/add',function(req, res){
         });
     } else res.redirect('/bad_login');
 });
+// Añadir un aporte/solución  un proyecto.
 router.post('/sol/add',function(req, res){
     if(req.session.isUserLogged){
         var input = JSON.parse(JSON.stringify(req.body));
@@ -228,18 +266,19 @@ router.post('/sol/add',function(req, res){
         });
     } else res.redirect('/bad_login');
 });
+// Conseguir todas las soluciones de un proyecto
 router.get('/sol/get/:idproy',function(req, res){
     var int = "show_sol";
-    if(req.session.isUserLogged){
+    if(req.session.isUserLogged || req.session.isAdminLogged){
         req.getConnection(function(err,connection){
 
-            connection.query('SELECT solucion.*,user.username,user.avatar_pat as iconouser FROM solucion LEFT JOIN user ON user.iduser = solucion.iduser' +
+            connection.query('SELECT solucion.*,user.username,COALESCE(user.avatar_pat,"/assets/img/placeholder.png") as iconouser FROM solucion LEFT JOIN user ON user.iduser = solucion.iduser' +
                 ' WHERE solucion.idproyecto = ? GROUP BY solucion.idsolucion ORDER BY solucion.fecha DESC',req.params.idproy,function(err,rows)
             {
                 if(err)
                     console.log("Error Selecting : %s ",err );
                 var acts = rows;
-                connection.query('SELECT group_concat(user.username , "@" , user.iduser, "@", user.avatar_pat, "@", userproyecto.flag) as usuarios,proyecto.*,' +
+                connection.query('SELECT group_concat(user.username , "@" , user.iduser, "@", COALESCE(user.avatar_pat,"/assets/img/placeholder.png"), "@", userproyecto.flag) as usuarios,proyecto.*,' +
                     'etapa.token FROM proyecto LEFT JOIN userproyecto ON userproyecto.idproyecto = proyecto.idproyecto LEFT JOIN user ON user.iduser = userproyecto.iduser' +
                     ' LEFT JOIN etapa ON etapa.idevento = proyecto.idevento AND etapa.nro = proyecto.etapa WHERE proyecto.idproyecto = ? GROUP BY etapa.token',req.params.idproy,function(err,rows)
                 {
@@ -253,7 +292,16 @@ router.get('/sol/get/:idproy',function(req, res){
                                 int = "mod_sol";
                             }
                         }
-                        res.render(int,{data :acts,gral : rows[0], usr:req.session.user});
+                        if(req.session.isAdminLogged){
+                            res.render(int,{data :acts,gral : rows[0], usr:req.session.user,admin:true},function(err,html){
+                                if(err)console.log(err);
+                                res.send(html);
+                            });
+                        } else
+                            res.render(int,{data :acts,gral : rows[0], usr:req.session.user,admin:false},function(err,html){
+                                if(err)console.log(err);
+                                res.send(html);
+                            });
                     }
 
                 });
@@ -263,27 +311,7 @@ router.get('/sol/get/:idproy',function(req, res){
         });
     } else res.redirect('/bad_login');
 });
-router.get('/',function(req, res){
-    if(req.session.isUserLogged){
-        req.getConnection(function(err,connection){
-            if(err){
-                console.log("Error Connecting : %s ",err );
-            }
-            connection.query('SELECT proyecto.*,user.username,user.avatar_pat as iconouser,GROUP_CONCAT(DISTINCT tags.tag ORDER BY tags.tag) AS tagz,' +
-                ' GROUP_CONCAT(DISTINCT proylike.iduser SEPARATOR "&&") as proylaik, COUNT(DISTINCT proylike.iduser) as lenlaik FROM' +
-                ' proyecto LEFT JOIN tagproyecto ON proyecto.idproyecto = tagproyecto.idproyecto LEFT JOIN tags ON tagproyecto.idtag = tags.idtag' +
-                ' INNER JOIN user ON user.iduser = proyecto.idcreador LEFT JOIN proylike ON proylike.idproyecto = proyecto.idproyecto' +
-                ' GROUP BY proyecto.idproyecto ORDER BY proyecto.actualizado DESC LIMIT 12',function(err,rows)
-            {
-                if(err)
-                    console.log("Error Selecting : %s ",err );
-                res.render('proyect_indx',{data :rows, usr:req.session.user});
-
-                //console.log(query.sql);
-            });
-        });
-    } else res.redirect('/bad_login');
-});
+// Cargar mas proyectos
 router.post('/proy_stream', function(req,res){
     if(req.session.isUserLogged){
         var input = JSON.parse(JSON.stringify(req.body));
@@ -329,6 +357,7 @@ router.post('/proy_stream', function(req,res){
         });
     }
 });
+// Renderizar barra de información de un proyecto.
 router.post('/render_proyinfo', function(req,res){
     if(req.session.isUserLogged){
         var input = JSON.parse(JSON.stringify(req.body));
@@ -352,6 +381,7 @@ router.post('/render_proyinfo', function(req,res){
     } else res.redirect('/bad_login');
 
 });
+// Agregar un Like a un proyecto
 router.post('/laik_p',function (req, res) {
     if(req.session.isUserLogged){
         var input = JSON.parse(JSON.stringify(req.body));
@@ -395,6 +425,18 @@ router.post('/laik_p',function (req, res) {
             });
         });
     } else res.send("no");
+});
+// Eliminar a un proyecto
+router.get('/remove/:idproy',function (req, res) {
+    if(req.session.isAdminLogged){
+        req.getConnection(function (err, connection) {
+            connection.query("DELETE FROM proyecto WHERE idproyecto = ?", req.params.idproy, function (err, rows) {
+                if (err)
+                    console.log("Error selecting : %s ", err);
+                res.redirect(req.header("Referer") || '/lab');
+            });
+        });
+    } else res.send({error:false,msg:"HEY! ESO NO SE HACE"});
 });
 
 module.exports = router;
