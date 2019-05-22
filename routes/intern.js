@@ -180,7 +180,7 @@ router.post('/add', function(req, res){
             {
                 if(err)
                     console.log("Error Selecting : %s ",err );
-                res.redirect('/lab/intern/' + input.idproy.toString());
+                res.redirect('/lab/intern/show/' + input.idproy.toString());
 
                 //console.log(query.sql);
             });
