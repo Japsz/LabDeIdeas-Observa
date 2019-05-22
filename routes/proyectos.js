@@ -235,7 +235,7 @@ router.post('/act/add',function(req, res){
                     if(err)
                         console.log("Error Selecting : %s ",err );
                     console.log(rows);
-                    res.redirect('/proy/get/' + input.idproy.toString());
+                    res.redirect('/lab/proy/get/' + input.idproy.toString());
                 });
 
                 //console.log(query.sql);

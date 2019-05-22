@@ -162,7 +162,7 @@ router.get('/show/:idproy', function(req, res){
     } else res.redirect('/bad_login');
 });
 // Crear un post en el muro interno de un proyecto
-router.post('/intern/add', function(req, res){
+router.post('/add', function(req, res){
     if(req.session.isUserLogged){
         var input = JSON.parse(JSON.stringify(req.body));
         var data = {
@@ -180,7 +180,7 @@ router.post('/intern/add', function(req, res){
             {
                 if(err)
                     console.log("Error Selecting : %s ",err );
-                res.redirect('/intern/' + input.idproy.toString());
+                res.redirect('/lab/intern/' + input.idproy.toString());
 
                 //console.log(query.sql);
             });

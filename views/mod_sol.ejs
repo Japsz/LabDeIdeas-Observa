@@ -22,7 +22,7 @@
                                 <div class="blog-post-content">
                                     <h4 class="text-center"><%- data[i].contenido%></h4>
                                     <div class="blog-post-share pull-left" style="display: flex">
-                                        <img src="<%= data[i].iconouser%>" style="margin: 0;height: 30px" width="30px" class="img-circle img-responsive">
+                                        <img src="<%= data[i].iconouser%>" style="margin: 0; width:60px; height:60px" class="img-circle img-responsive">
                                         <h5 style="margin-left: 10px"><%= data[i].username%></h5>
                                     </div>
                                     <div class="blog-post-share pull-right">
@@ -65,7 +65,7 @@
                         <br>
                         <h4>Integrantes</h4>
                         <% for(var j = 0;j<gral.usuarios.length;j++){%>
-                        <div class="text-center" style="display: flex;margin: 10px"><img src="<%= gral.usuarios[j][2]%>"  class="img-responsive img-circle" style="margin: 0; height: 30px" width="30px"> <p style="margin-left: 10px"><%= gral.usuarios[j][0]%></p><span class="label label-light label-primary" style="margin-left: 4px"><%= gral.usuarios[j][3]%></span></div>
+                        <div class="text-center" style="display: flex;margin: 10px"><img src="<%= gral.usuarios[j][2]%>"  class="img-responsive img-circle" style="margin: 0; width:40px; height:40px"> <p style="margin-left: 10px"><%= gral.usuarios[j][0]%></p><span class="label label-light label-primary" style="margin-left: 4px"><%= gral.usuarios[j][3]%></span></div>
                         <%}%>
                         <br>
                         <a class="btn btn-primary" href="/lab/intern/show/<%=gral.idproyecto%>">Muro Interno</a>
