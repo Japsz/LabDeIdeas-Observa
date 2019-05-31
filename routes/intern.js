@@ -7,7 +7,7 @@ router.use(
     connection(mysql,{
 
         host: '127.0.0.1',
-        user: 'root',
+        user: 'obs',
         password : 'observaproyecta',
         port : 3306,
         database:'Observapp',
