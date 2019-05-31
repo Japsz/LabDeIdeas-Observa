@@ -42,7 +42,6 @@
                     %><section class="blog-post" id="<%= data[i].idpostinterno %>">
                         <div class="panel panel-default">
                             <div class="panel-body">
-
                                 <div class="blog-post-meta">
                                     <% switch(data[i].tipo){
                                     case 0:%>
@@ -148,7 +147,7 @@
                                                         type: "POST",
                                                         data: JSON.stringify(data),
                                                         contentType: "application/json",
-                                                        url: "lab/intern/progress",
+                                                        url: "/lab/intern/progress",
                                                         success: function(data) {
                                                             if(data != "no"){
                                                                 $("#" + id + " .laik").addClass("hidden");
@@ -237,6 +236,7 @@
         </div>
         <script type="text/javascript">
             $(function () {
+                //gral.token es el token que de la etapa actual en la que está el proyecto
                 var token = "<%= gral.token%>".split("&amp;&amp;");
                 $(document).on("click", ".postint", function() {
                     var data;
