@@ -15,6 +15,15 @@ router.use(
 
     },'pool')
 );
+function isMonitor(obsList,idobs){
+    for(var i = 0;i<obsList.length;i++){
+        if(parseInt(idobs) === parseInt(obsList[i].idobservatorio)){
+            return true;
+        }
+    }
+    return false;
+};
+
 // Lógica ver todos los proyectos (página principal)
 router.get('/',function(req, res){
     if(req.session.isUserLogged){
@@ -192,7 +201,7 @@ router.get('/get/:idproy',function(req, res){
                                 int = "mod_proy";
                             }
                         }
-                        if(req.session.isAdminLogged){
+                        if(req.session.isAdminLogged || (req.session.isMonitLogged && isMonitor(req.session.idobs,rows[0].idobservatorio))){
                             res.render(int,{data :acts,gral : rows[0], usr:req.session.user,admin:true},function(err,html){
                                 if(err)console.log(err);
                                 res.send(html);
@@ -202,11 +211,8 @@ router.get('/get/:idproy',function(req, res){
                             if(err)console.log(err);
                             res.send(html);
                         });
-            }
-
+                    }
                 });
-
-                //console.log(query.sql);
             });
         });
     } else res.redirect('/bad_login');
@@ -292,7 +298,7 @@ router.get('/sol/get/:idproy',function(req, res){
                                 int = "mod_sol";
                             }
                         }
-                        if(req.session.isAdminLogged){
+                        if(req.session.isAdminLogged || (req.session.isMonitLogged && isMonitor(req.session.idobs,rows[0].idobservatorio))){
                             res.render(int,{data :acts,gral : rows[0], usr:req.session.user,admin:true},function(err,html){
                                 if(err)console.log(err);
                                 res.send(html);
@@ -319,9 +325,11 @@ router.post('/proy_stream', function(req,res){
         req.getConnection(function(err,connection){
 
             connection.query('SELECT proyecto.*,user.username,user.avatar_pat as iconouser,GROUP_CONCAT(DISTINCT tags.tag ORDER BY tags.tag) AS tagz,' +
-                ' GROUP_CONCAT(DISTINCT proylike.iduser SEPARATOR "&&") as proylaik, COUNT(DISTINCT proylike.iduser) as lenlaik FROM' +
-                ' proyecto LEFT JOIN tagproyecto ON proyecto.idproyecto = tagproyecto.idproyecto LEFT JOIN tags ON tagproyecto.idtag = tags.idtag' +
-                ' INNER JOIN user ON user.iduser = proyecto.idcreador LEFT JOIN proylike ON proylike.idproyecto = proyecto.idproyecto' +
+                ' GROUP_CONCAT(DISTINCT proylike.iduser SEPARATOR "&&") as proylaik, COUNT(DISTINCT proylike.iduser) as lenlaik FROM proyecto' +
+                ' LEFT JOIN tagproyecto ON proyecto.idproyecto = tagproyecto.idproyecto' +
+                ' LEFT JOIN tags ON tagproyecto.idtag = tags.idtag' +
+                ' INNER JOIN user ON user.iduser = proyecto.idcreador' +
+                ' LEFT JOIN proylike ON proylike.idproyecto = proyecto.idproyecto' +
                 ' WHERE proyecto.actualizado < ? GROUP BY proyecto.idproyecto ORDER BY proyecto.actualizado DESC LIMIT 9',[new Date(input.idpost)],function(err,rows)
             {
                 if(err)

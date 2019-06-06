@@ -15,6 +15,15 @@ router.use(
 
     },'pool')
 );
+
+function isMonitor(obsList,idobs){
+    for(var i = 0;i<obsList.length;i++){
+        if(parseInt(idobs) === parseInt(obsList[i].idobservatorio)){
+            return true;
+        }
+    }
+    return false;
+};
 // Postear una solución al muro interno
 router.post('/postsol', function(req, res){
     if(req.session.isUserLogged){
@@ -71,7 +80,9 @@ router.post('/comment_stream', function(req, res){
             {
                 if(err)
                     console.log("Error Selecting : %s ",err );
-                if(req.session.isAdminLogged) res.render('intcmnt_stream',{data:input.idpost,usr:req.session.user,comments : rows,admin:true})
+                if(req.session.isAdminLogged || req.session.isMonitLogged){
+                    res.render('intcmnt_stream',{data:input.idpost,usr:req.session.user,comments : rows,admin:true});
+                }
                 else res.render('intcmnt_stream',{data:input.idpost,usr:req.session.user,comments : rows,admin:false});
 
 
@@ -146,14 +157,13 @@ router.get('/show/:idproy', function(req, res){
                         connection.query("SELECT GROUP_CONCAT(etapa.nombre ORDER BY etapa.nro ASC) as etapas FROM proyecto RIGHT JOIN etapa ON proyecto.idevento = etapa.idevento WHERE proyecto.idproyecto = ? GROUP BY proyecto.idproyecto",req.params.idproy,function(err,etapas){
                             if(err)
                                 console.log("Error Selecting : %s ",err );
-                            if(req.session.isAdminLogged){
+                            if(req.session.isAdminLogged || (req.session.isMonitLogged && isMonitor(req.session.idobs,rows[0].idobservatorio))){
                                 res.render("muro",{data :psts,gral : rows[0], usr:req.session.user,etapas: etapas[0].etapas.split(","),admin:true});
                             } else if(int)
                                 res.render("muro",{data :psts,gral : rows[0], usr:req.session.user,etapas: etapas[0].etapas.split(","),admin:false});
                             else res.redirect('/bad_login');
                         });
                     }
-
                 });
 
                 //console.log(query.sql);
