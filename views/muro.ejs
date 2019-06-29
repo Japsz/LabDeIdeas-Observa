@@ -27,7 +27,7 @@
                 <li><a href="#" data-toggle="modal" data-target="#aa" data-tipo="1" class="postint"><i class="menu-icon menu-icon-5"></i>Escrito</a></li>
                 <% if(gral.etapa <= etapas.length){%>
                 <li>
-                    <a class="postint" href="#" data-toggle="modal" data-target="#aa" data-tipo="3"><i class="menu-icon menu-icon-6"></i>Avance</a>
+                    <a href="#" data-toggle="modal" data-target="#avantModal"><i class="menu-icon menu-icon-6"></i>Avance</a>
                 </li>
                 <%}%>
             </ul>
@@ -200,10 +200,121 @@
             </div><!-- /.sidebar-module -->
         </div><!-- /.blog-sidebar -->
 
-        <div class="modal fade" id="aa" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal fade" id="avantModal" tabindex="-1" role="dialog" aria-labelledby="avantLabel">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
 
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h2 class="modal-title" id="avantLabel">Postear Avance</h2>
+                    </div>
+                    <form id="avantForm">
+                        <div class="modal-body">
+                            <div id="preview"></div>
+                            <%if(gral.token.length){
+                                var tokenAux;%>
+                            <% for(var i = 0;i<gral.token.length;i++){
+                                tokenAux = gral.token[i].split("@@");
+                                if(parseInt(tokenAux[1])){%>
+                                <div class="form-group">
+                                    <h3> <%=tokenAux[0]%></h3>
+                                    <div class="row">
+                                        <div class="col-sm-8">
+                                            <div class="well" id="file<%=tokenAux[2]%>"></div>
+                                            <input type="hidden" name="<%=tokenAux[2]%>" value="" id="resp<%=tokenAux[2]%>" required>
+                                        </div>
+                                        <div class="col-sm-4">
+                                            <div class="input-group">
+                                                <input type="file" name="archivo<%=tokenAux[2]%>" data-idenunciado="<%=tokenAux[2]%>">
+                                                <button type="button" class="btn btn-success">Cargar Archivo</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <%} else {%>
+                                <div class="form-group">
+                                    <h3> <%=tokenAux[0]%></h3>
+                                    <textarea type="text" name="<%=tokenAux[2]%>" data-idenunciado="<%=tokenAux[2]%>" id="resp<%=tokenAux[2]%>"></textarea>
+                                </div>
+                                <script type="text/javascript">
+                                    $(function(){ $("#resp<%=tokenAux[2]%>").jqte({
+                                            color: false,
+                                            source: false,
+                                            sub: false,
+                                            sup: false,
+                                            strike: false,
+                                            indent: false,
+                                            format: false,
+                                            outdent: false
+                                        });
+                                    });
+                                </script>
+                                <%}
+                            }%>
+                            <%}%>
+                        </div>
+                        <div class="modal-footer">
+                            <input type="hidden" value="<%= gral.idproyecto%>" name="idproy">
+                            <div class="form-group form-inline">
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                    <button type="submit" class="btn btn-primary">+ Postear</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <script type="text/javascript">
+                        $("#avantForm").on('submit',function(e){
+                           e.preventDefault();
+                           var formData = {answers:[]}
+                           var filearray =[];
+                           var fileData = new FormData();
+                           $("#avantForm input[type='file']").each(function(idx,val){
+                               if(!this.files){
+                                   alert("Este navegador no es compatible con la subida de archivos, porfavor intente con otro");
+                               } else if(!this.files[0]){
+                                   alert("Porfavor seleccione un archivo");
+                               } else {
+                                   var formData = this.files[0];
+                                   if(formData.size > 15*1024*1024){
+                                       alert("El archivo seleccionado es muy grande");
+                                   } else {
+                                       fileData.append('file-'+idx,this.files[0]);
+                                   }
+                               }
+                              filearray.push({
+                                  idenunciado:$(this).data('idenunciado'),
+                                  value: $(this).val(),
+                                  idx: idx
+                              });
+                           });
+                            var array = $(this).serializeArray();
+                            for(var i = 0;i<array.length;i++){
+                                if(array[i].name != 'idproy'){
+                                    formData.answers.push([array[i].name,array[i].value]);
+                                } else {
+                                    formData.idproyecto = array[i].value;
+                                }
+                            }
+                           $.ajax({
+                               url:"/lab/intern/avance/save",
+                               type:'POST',
+                               data:JSON.stringify(formData),
+                               contentType: 'application/json',
+                               success: function(data){
+                                   if(!data.err){
+                                       window.location.href = data.urlRedirect;
+                                   } else alert("Error al crear el avance");
+                               }
+                           })
+                        });
+                    </script>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="aa" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                         <h2 class="modal-title" id="myModalLabel">Posteo interno</h2>
@@ -222,7 +333,6 @@
                         </div>
                         <div class="modal-footer">
                             <input type="hidden" value="<%= gral.idproyecto%>" name="idproy">
-                            <input type="hidden" value="<%= gral.token%>" name="token">
                             <div class="form-group form-inline">
                                 <div class="btn-group">
                                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
@@ -237,7 +347,6 @@
         <script type="text/javascript">
             $(function () {
                 //gral.token es el token que de la etapa actual en la que está el proyecto
-                var token = "<%= gral.token%>".split("&amp;&amp;");
                 $(document).on("click", ".postint", function() {
                     var data;
                     $("#editor").jqteVal("");
@@ -252,9 +361,6 @@
                             both = false;
                         }
                     } else {
-                        $("#myModalLabel").html("Pre-avance de etapa");
-                        $(".t1").html(token[0]);
-                        $(".t2").html(token[1]);
                         if(!both){
                             $("#editor2").jqte({
                                 color: false,

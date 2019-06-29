@@ -3,6 +3,7 @@ var router = express.Router();
 var connection  = require('express-myconnection');
 var mysql = require('mysql');
 
+var avance = require('./avance');
 router.use(
     connection(mysql,{
 
@@ -24,6 +25,8 @@ function isMonitor(obsList,idobs){
     }
     return false;
 };
+
+router.use('/avance',avance);
 // Postear una solución al muro interno
 router.post('/postsol', function(req, res){
     if(req.session.isUserLogged){
@@ -75,12 +78,15 @@ router.post('/comment_stream', function(req, res){
     if(req.session.isUserLogged || req.session.isAdminLogged){
         req.getConnection(function(err,connection){
 
-            connection.query('SELECT comentinterno.*,user.username,user.avatar_pat FROM comentinterno INNER JOIN user ON user.iduser = comentinterno.iduser' +
+            connection.query('SELECT comentinterno.*,user.username,user.avatar_pat' +
+                ' FROM comentinterno' +
+                ' ' +
+                ' INNER JOIN user ON user.iduser = comentinterno.iduser' +
                 ' WHERE idpost  = ? GROUP BY comentinterno.idcomentinterno',input.idpost,function(err,rows)
             {
                 if(err)
                     console.log("Error Selecting : %s ",err );
-                if(req.session.isAdminLogged || req.session.isMonitLogged){
+                if(req.session.isAdminLogged || ireq.session.isMonitLogged){
                     res.render('intcmnt_stream',{data:input.idpost,usr:req.session.user,comments : rows,admin:true});
                 }
                 else res.render('intcmnt_stream',{data:input.idpost,usr:req.session.user,comments : rows,admin:false});
@@ -139,14 +145,17 @@ router.get('/show/:idproy', function(req, res){
                         }
                     }
                 }
-                connection.query('SELECT group_concat(user.username , "@" , user.iduser, "@", COALESCE(user.avatar_pat,"/assets/img/placeholder.png"), "@", userproyecto.flag) as usuarios,proyecto.*,etapa.token,evento.likes' +
-                    ' FROM proyecto LEFT JOIN userproyecto ON userproyecto.idproyecto = proyecto.idproyecto LEFT JOIN user ON user.iduser = userproyecto.iduser' +
-                    ' LEFT JOIN etapa ON proyecto.idevento = etapa.idevento AND etapa.nro = proyecto.etapa LEFT JOIN evento ON evento.idevento = proyecto.idevento' +
-                    ' WHERE proyecto.idproyecto = ? GROUP BY etapa.token',req.params.idproy,function(err,rows)
+                connection.query('SELECT group_concat(DISTINCT user.username , "@" , user.iduser, "@", COALESCE(user.avatar_pat,"/assets/img/placeholder.png"), "@", userproyecto.flag) as usuarios,proyecto.*,etapas.likes,GROUP_CONCAT(DISTINCT enunciado.enunciado ,"@@", enunciado.archivo,"@@",enunciado.idenunciado SEPARATOR "&&") AS token' +
+                    ' FROM proyecto LEFT JOIN userproyecto ON userproyecto.idproyecto = proyecto.idproyecto' +
+                    ' LEFT JOIN user ON user.iduser = userproyecto.iduser' +
+                    ' LEFT JOIN etapas ON proyecto.idevento = etapas.idevento' +
+                    ' LEFT JOIN enunciado ON enunciado.idetapa = etapas.idetapa' +
+                    ' WHERE proyecto.idproyecto = ? AND etapas.nro = proyecto.etapa GROUP BY proyecto.idproyecto',req.params.idproy,function(err,rows)
                 {
                     if(err)
                         console.log("Error Selecting : %s ",err );
                     if(rows.length){
+                        rows[0].token = rows[0].token.split("&&");
                         rows[0].usuarios = rows[0].usuarios.split(",");
                         for(var i = 0; i<rows[0].usuarios.length;i++){
                             rows[0].usuarios[i] = rows[0].usuarios[i].split("@");
@@ -154,13 +163,13 @@ router.get('/show/:idproy', function(req, res){
                                 int = true;
                             }
                         }
-                        connection.query("SELECT GROUP_CONCAT(etapa.nombre ORDER BY etapa.nro ASC) as etapas FROM proyecto RIGHT JOIN etapa ON proyecto.idevento = etapa.idevento WHERE proyecto.idproyecto = ? GROUP BY proyecto.idproyecto",req.params.idproy,function(err,etapas){
+                        connection.query("SELECT GROUP_CONCAT(etapas.nombre ORDER BY etapas.nro ASC SEPARATOR '@@') as etapas FROM proyecto RIGHT JOIN etapas ON proyecto.idevento = etapas.idevento WHERE proyecto.idproyecto = ? GROUP BY proyecto.idproyecto",req.params.idproy,function(err,etapas){
                             if(err)
                                 console.log("Error Selecting : %s ",err );
                             if(req.session.isAdminLogged || (req.session.isMonitLogged && isMonitor(req.session.idobs,rows[0].idobservatorio))){
-                                res.render("muro",{data :psts,gral : rows[0], usr:req.session.user,etapas: etapas[0].etapas.split(","),admin:true});
+                                res.render("muro",{data :psts,gral : rows[0], usr:req.session.user,etapas: etapas[0].etapas.split("@@"),admin:true});
                             } else if(int)
-                                res.render("muro",{data :psts,gral : rows[0], usr:req.session.user,etapas: etapas[0].etapas.split(","),admin:false});
+                                res.render("muro",{data :psts,gral : rows[0], usr:req.session.user,etapas: etapas[0].etapas.split("@@"),admin:false});
                             else res.redirect('/bad_login');
                         });
                     }

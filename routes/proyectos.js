@@ -184,8 +184,12 @@ router.get('/get/:idproy',function(req, res){
                 if(err)
                     console.log("Error Selecting : %s ",err );
                 var acts = rows;
-                connection.query('SELECT group_concat(DISTINCT user.username , "@" , user.iduser, "@", COALESCE(user.avatar_pat,"/assets/img/placeholder.png"),"@",userproyecto.flag) as usuarios,proyecto.*,GROUP_CONCAT(DISTINCT etapa.nombre ORDER BY etapa.nro ASC) as etapas FROM proyecto LEFT JOIN userproyecto ON userproyecto.idproyecto = proyecto.idproyecto' +
-                    ' LEFT JOIN user ON user.iduser = userproyecto.iduser LEFT JOIN etapa ON etapa.idevento = proyecto.idevento WHERE proyecto.idproyecto = ? GROUP BY proyecto.idproyecto',req.params.idproy,function(err,rows)
+                connection.query('SELECT group_concat(DISTINCT user.username , "@" , user.iduser, "@", COALESCE(user.avatar_pat,"/assets/img/placeholder.png"),"@",userproyecto.flag) as usuarios,proyecto.*,GROUP_CONCAT(DISTINCT etapas.nombre ORDER BY etapas.nro ASC) as etapas' +
+                    ' FROM proyecto' +
+                    ' LEFT JOIN userproyecto ON userproyecto.idproyecto = proyecto.idproyecto' +
+                    ' LEFT JOIN user ON user.iduser = userproyecto.iduser' +
+                    ' LEFT JOIN etapas ON etapas.idevento = proyecto.idevento' +
+                    ' WHERE proyecto.idproyecto = ? GROUP BY proyecto.idproyecto',req.params.idproy,function(err,rows)
                 {
                     if(err)
                         console.log("Error Selecting : %s ",err );
@@ -284,9 +288,13 @@ router.get('/sol/get/:idproy',function(req, res){
                 if(err)
                     console.log("Error Selecting : %s ",err );
                 var acts = rows;
-                connection.query('SELECT group_concat(user.username , "@" , user.iduser, "@", COALESCE(user.avatar_pat,"/assets/img/placeholder.png"), "@", userproyecto.flag) as usuarios,proyecto.*,' +
-                    'etapa.token FROM proyecto LEFT JOIN userproyecto ON userproyecto.idproyecto = proyecto.idproyecto LEFT JOIN user ON user.iduser = userproyecto.iduser' +
-                    ' LEFT JOIN etapa ON etapa.idevento = proyecto.idevento AND etapa.nro = proyecto.etapa WHERE proyecto.idproyecto = ? GROUP BY etapa.token',req.params.idproy,function(err,rows)
+                connection.query('SELECT group_concat(DISTINCT user.username , "@" , user.iduser, "@", COALESCE(user.avatar_pat,"/assets/img/placeholder.png"), "@", userproyecto.flag) as usuarios,proyecto.*,GROUP_CONCAT(DISTINCT enunciado.enunciado ,"@@", enunciado.archivo SEPARATOR "&&") AS token' +
+                    ' FROM proyecto' +
+                    ' LEFT JOIN userproyecto ON userproyecto.idproyecto = proyecto.idproyecto' +
+                    ' LEFT JOIN user ON user.iduser = userproyecto.iduser' +
+                    ' LEFT JOIN etapas ON etapas.idevento = proyecto.idevento AND etapas.nro = proyecto.etapa' +
+                    ' LEFT JOIN enunciado ON enunciado.idetapa = etapas.idetapa' +
+                    ' WHERE proyecto.idproyecto = ? GROUP BY etapas.idetapa',req.params.idproy,function(err,rows)
                 {
                     if(err)
                         console.log("Error Selecting : %s ",err );
@@ -371,8 +379,14 @@ router.post('/render_proyinfo', function(req,res){
         var input = JSON.parse(JSON.stringify(req.body));
 
         req.getConnection(function(err,connection){
-            connection.query('SELECT group_concat(DISTINCT user.username , "@" , user.iduser, "@", user.avatar_pat, "@", userproyecto.flag) as usuarios,proyecto.*,evento.likes FROM postinterno RIGHT JOIN proyecto ON postinterno.idproyecto = proyecto.idproyecto' +
-                ' LEFT JOIN userproyecto ON userproyecto.idproyecto = proyecto.idproyecto LEFT JOIN user ON user.iduser = userproyecto.iduser LEFT JOIN evento ON proyecto.idevento = evento.idevento WHERE postinterno.idpostinterno = ? GROUP BY proyecto.idproyecto',input.idpost,function(err,rows)
+            connection.query('SELECT group_concat(DISTINCT user.username , "@" , user.iduser, "@", user.avatar_pat, "@", userproyecto.flag) as usuarios,proyecto.*,etapas.likes' +
+                ' FROM postinterno' +
+                ' RIGHT JOIN proyecto ON postinterno.idproyecto = proyecto.idproyecto' +
+                ' LEFT JOIN userproyecto ON userproyecto.idproyecto = proyecto.idproyecto' +
+                ' LEFT JOIN user ON user.iduser = userproyecto.iduser' +
+                ' LEFT JOIN event ON proyecto.idevento = event.idevento' +
+                ' LEFT JOIN etapas ON etapas.idevento = event.idevento' +
+                ' WHERE postinterno.idpostinterno = ? AND etapas.nro = proyecto.etapa GROUP BY proyecto.idproyecto',input.idpost,function(err,rows)
             {
                 if(err)
                     console.log("Error Selecting : %s ",err );
@@ -414,10 +428,15 @@ router.post('/laik_p',function (req, res) {
                     connection.query("INSERT INTO proylike SET ?",{idproyecto: input.idpost, iduser: req.session.user.iduser},function(err,rows){
                         if (err)
                             console.log("Error inserting : %s ",err );
-                        connection.query("SELECT COUNT(DISTINCT proylike.iduser) AS lenlaik,proyecto.gotlaik,proyecto.idcreador, evento.likes, proyecto.etapa FROM proylike LEFT JOIN proyecto ON proyecto.idproyecto = proylike.idproyecto LEFT JOIN evento ON proyecto.idevento = evento.idevento WHERE proylike.idproyecto = ? GROUP BY proyecto.etapa",input.idpost,function(err,rows){
+                        connection.query("SELECT COUNT(DISTINCT proylike.iduser) AS lenlaik,proyecto.gotlaik,proyecto.idcreador, etapas.likes, proyecto.etapa" +
+                            " FROM proylike" +
+                            " LEFT JOIN proyecto ON proyecto.idproyecto = proylike.idproyecto" +
+                            " LEFT JOIN event ON proyecto.idevento = event.idevento" +
+                            " LEFT JOIN etapas ON etapas.idevento = event.idevento" +
+                            " WHERE proylike.idproyecto = ? AND etapas.nro = proyecto.etapa GROUP BY proyecto.etapa",input.idpost,function(err,rows){
                             if (err)
                                 console.log("Error selecting : %s ",err );
-                            if(rows[0].lenlaik >= rows[0].etapa*rows[0].likes && rows[0].gotlaik == 0){
+                            if(parseInt(rows[0].lenlaik) >= parseInt(rows[0].likes) && rows[0].gotlaik == 0){
                                 var proyobj = rows[0];
                                 connection.query("UPDATE proyecto SET gotlaik = 1 WHERE idproyecto = ?",input.idpost,function(err,rows){
                                     if (err)
