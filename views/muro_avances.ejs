@@ -1,0 +1,363 @@
+<%- include layouts/proyect_header %>
+
+
+<style>
+    .modalpost {
+        z-index: 0;
+        list-style-type: none;
+    }
+
+</style>
+
+<div class="container blog-content">
+    <h3 class="page-header">Muro Interno</h3>
+    <ol class="breadcrumb">
+        <% if(!admin){%>
+        <li><a href="/lab/proy/proy_cdd">Mis Proyectos</a></li>
+        <%}%>
+        <li><a href="/lab/proy/get/<%= gral.idproyecto%>" ><%= gral.titulo%></a></li>
+        <li class="active">Avances</li>
+    </ol>
+    <div class="row">
+x        <div class="col-sm-8 blog-main">
+            <% if(!admin){%>
+            <ul class="menu boxed clearfix modalpost" aria-hidden="true">
+                <li><img src="/assets/img/isov_iso.png" height="84px" height="auto"></li>
+                <li><a href="#" data-toggle="modal" data-target="#aa" data-tipo="1" class="postint"><i class="menu-icon menu-icon-5"></i>Escrito</a></li>
+                <% if(gral.etapa <= etapas.length){%>
+                <li>
+                    <a href="#" data-toggle="modal" data-target="#avantModal"><i class="menu-icon menu-icon-6"></i>Avance</a>
+                </li>
+                <%}%>
+            </ul>
+            <%}%>
+            <div class="row">
+                <div class="col-sm-12">
+                    <% if(data.length) {
+                        var f_gen;
+                    for(var i = 0;i<data.length;i++){
+                        f_gen = new Date(data[i].fecha);
+                        f_gen = f_gen.toLocaleString();
+                    %><section class="blog-post" id="<%= data[i].idavance %>">
+                        <div class="panel panel-default">
+                            <div class="panel-body">
+                                <div class="blog-post-meta">
+                                    <span class="label label-light label-danger">Avance <%= data[i].estado%></span>
+                                    <p class="pull-right"><%=f_gen%></p>
+                                </div>
+                                <div class="blog-post-content">
+                                    <% data[i].ansToken.map(function(valor){
+                                        valor = valor.split("@@");%>
+                                    <h3><%= valor[0]%></h3>
+                                    <% if(parseInt(valor[1])){%>
+                                    <a href="<%= valor[2]%>" class="btn btn-success" download><i class="glyphicon glyphicon-download"></i> Descargar respuesta</a>
+                                    <%} else {%>
+                                    <p><%- valor[2]%></p>
+                                    <%}%>
+                                    <%});%>
+                                    <div class="blog-post-share pull-left" style="display: flex">
+                                        <img src="<%= data[i].userToken[1]%>" style="margin: 0;height: 30px" width="30px" class="img-circle img-responsive">
+                                        <h5 style="margin-left: 10px"><%= data[i].userToken[0]%></h5>
+                                    </div>
+                                    <div class="blog-post-share pull-right" style="display: flex">
+                                        <% if(data[i].estado == 'propuesto' && !admin){%>
+                                        <input type="hidden" class="hidden" name="laiktoken" data-id="<%= data[i].idavance%>" value="<%=data[i].laiks%>">
+                                        <a class="avantlaik btn btn-inverse" data-id="<%= data[i].idavance%>" href="#">
+                                            <% if(data[i].laiks == "fin"){ %>
+                                            <i class="glyphicon glyphicon-ok"></i>
+                                            <% } else {%>
+                                            <i class="glyphicon glyphicon-thumbs-up"></i> 0 / <%= (gral.usuarios.length - gral.usuarios.length%2)/2 + 1%>
+                                            <%}%>
+                                        </a>
+                                        <%}%>
+                                        <!--
+                                        <a class="btn btn-success sendprogress" href="#" data-id="<%=data[i].idavance%>">Enviar a aprobación</a>
+                                        <script type="text/javascript">
+                                            $(document).on("click",".sendprogress",function(){
+                                                var id = $(this).data("id");
+                                                var data = {idpost: $(this).data("id")};
+                                                $.ajax({
+                                                    type: "POST",
+                                                    data: JSON.stringify(data),
+                                                    contentType: "application/json",
+                                                    url: "/lab/intern/progress",
+                                                    success: function(data) {
+                                                        if(data != "no"){
+                                                            $("#" + id + " .laik").addClass("hidden");
+                                                            $("#" + id + " .sendprogress").addClass("hidden");
+                                                            $("#" + id + " .blog-post-meta").html('<span class="label label-light label-danger">Avance pendiente de aprobación</span><p class="pull-right"><%= f_gen %></p>');
+                                                        }
+                                                    }
+                                                });
+                                            })
+                                        </script>
+                                        -->
+
+                                    </div>
+
+                                </div>
+                            </div>
+                            <div class="panel-footer blog-comments hidden">
+                            </div>
+                        </div>
+                    </section>
+                    <%}%>
+                    <%} else {%>
+                    <p> No hay posts en el muro interno</p>
+                    <% } %>
+                </div>
+            </div>
+        </div><!-- /.blog-main -->
+        <div class="col-sm-4 blog-sidebar">
+            <div class="sidebar-module">
+                <div class="panel panel-default">
+                    <% if(gral.media != "no"){ %>
+                    <img src="<%= gral.media%>" width="auto" style="margin: auto;display: block;" class="img-responsive">
+                    <% } %>
+                    <div class="panel-body text-center" id="proyinfo">
+                        <h4 class="text-center"><%= gral.titulo%></h4>
+                        <h6 class="text-center"><%= gral.descripcion%></h6>
+                        <br>
+                        <h4>Integrantes</h4>
+                        <% for(var j = 0;j<gral.usuarios.length;j++){%>
+                        <div class="text-center" style="display: flex;margin: 10px"><img src="<%= gral.usuarios[j][2]%>"  class="img-responsive img-circle" style="margin: 0; height: 30px" width="30px"> <p style="margin-left: 10px"><%= gral.usuarios[j][0]%></p><span class="label label-light label-primary" style="margin-left: 4px"><%= gral.usuarios[j][3]%></span></div>
+                        <%}%>
+                        <br>
+                        <% if(gral.etapa <= etapas.length && !admin){%>
+                        <h5>Añadir un Integrante en esta etapa <span class="glyphicon <%if(gral.gotuser){%>glyphicon-ok<%} else {%>glyphicon-remove<%}%>"></span></h5>
+                        <br>
+                        <a class="btn btn-success" href="/lab/proy/sol/get/<%= gral.idproyecto%>">Ver Aportes</a>
+                        <%}%>
+                    </div>
+                </div>
+            </div><!-- /.sidebar-module -->
+        </div><!-- /.blog-sidebar -->
+
+        <div class="modal fade" id="avantModal" tabindex="-1" role="dialog" aria-labelledby="avantLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h2 class="modal-title" id="avantLabel">Postear Avance</h2>
+                    </div>
+                    <form id="avantForm">
+                        <div class="modal-body">
+                            <div id="preview"></div>
+                            <%if(gral.token.length){
+                                var tokenAux;%>
+                            <% for(var i = 0;i<gral.token.length;i++){
+                                tokenAux = gral.token[i].split("@@");
+                                if(parseInt(tokenAux[1])){%>
+                                <div class="form-group">
+                                    <h3> <%=tokenAux[0]%></h3>
+                                    <div class="row">
+                                        <div class="col-sm-8">
+                                            <div class="well" id="file<%=tokenAux[2]%>"></div>
+                                            <div class="progress">
+                                                <div id="mybar" class="progress-bar progress-bar-danger"></div>
+                                            </div>
+                                            <input type="hidden" name="<%=tokenAux[2]%>" id="resp<%=tokenAux[2]%>" value="">
+                                        </div>
+                                        <div class="col-sm-4">
+                                            <form action="/subir_file" enctype="multipart/form-data" method="post" id="fileForm<%= tokenAux[2]%>">
+                                            <div class="input-group">
+                                                <input type="file" name="archivo<%= tokenAux[2]%>" data-idenunciado="<%= tokenAux[2]%>" id="archivo<%= tokenAux[2]%>">
+                                                <button type="button" class="btn btn-success">Cargar Archivo</button>
+                                            </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                <%} else {%>
+                                <div class="form-group">
+                                    <h3> <%=tokenAux[0]%></h3>
+                                    <textarea type="text" name="<%=tokenAux[2]%>" data-idenunciado="<%=tokenAux[2]%>" id="resp<%=tokenAux[2]%>"></textarea>
+                                </div>
+                                <script type="text/javascript">
+                                    $(function(){ $("#resp<%=tokenAux[2]%>").jqte({
+                                            color: false,
+                                            source: false,
+                                            sub: false,
+                                            sup: false,
+                                            strike: false,
+                                            indent: false,
+                                            format: false,
+                                            outdent: false
+                                        });
+                                    });
+                                </script>
+                                <%}
+                            }%>
+                            <%}%>
+                        </div>
+                        <div class="modal-footer">
+                            <input type="hidden" value="<%= gral.idproyecto%>" name="idproy">
+                            <div class="form-group form-inline">
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                    <button type="submit" class="btn btn-primary">+ Postear</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <script type="text/javascript">
+                        $("#avantForm").on('submit',function(e){
+                            e.preventDefault();
+                            var formData = {answers:[]}
+                            var errado = false;
+                            $("#avantForm input[type='file']").each(function(idx,val){
+                               if(!this.files){
+                                   alert("Este navegador no es compatible con la subida de archivos, porfavor intente con otro");
+                               } else if(!this.files[0]){
+                                   alert("Porfavor seleccione un archivo");
+                               } else {
+                                   var fileData = new FormData();
+                                   fileData.append('file-'+idx,this.files[0]);
+                                   if(this.files[0].size > 15*1024*1024){
+                                       alert("El archivo seleccionado es muy grande");
+                                   } else {
+                                       var barra = $("#barra" + $(this).data('idenunciado'));
+                                       var form = $("#fileForm" + $(this).data('idenunciado'));
+                                       var enunAns = $("#resp" + $(this).data('idenunciado'));
+
+                                       var options = {
+                                           url: '/subir_file',
+                                           type: 'POST',
+                                           data: fileData,
+                                           cache: false,
+                                           contentType: false,
+                                           processData: false,
+                                           success: function(data) {
+                                               if(!data.err){
+                                                   enunAns.val(data.savedpath);
+                                               } else {
+                                                   errado = true;
+                                                   console.log(data.errMsg);
+                                               }
+                                           },
+                                           error: function(data){
+                                               errado = true;
+                                               console.log(data);
+                                           }
+                                       };
+                                       $.ajax(options);
+                                   }
+                               }
+                           });
+                            var array = $(this).serializeArray();
+                            for(var i = 0;i<array.length;i++){
+                                if(array[i].name != 'idproy'){
+                                    formData.answers.push([array[i].name,array[i].value]);
+                                } else {
+                                    if(array[i].value == ""){
+                                        errado = true;
+                                    } else {
+                                        formData.idproyecto = array[i].value;
+                                    }
+                                }
+                            }
+                            if(!errado){
+                                $.ajax({
+                                    url:"/lab/intern/avance/save",
+                                    type:'POST',
+                                    data:JSON.stringify(formData),
+                                    contentType: 'application/json',
+                                    success: function(data){
+                                        if(!data.err){
+                                            window.location.href = data.urlRedirect;
+                                        } else alert("Error al crear el avance");
+                                    }
+                                })
+                            } else {
+                                alert("Ocurrió un error al subir los archivos");
+                            }
+                        });
+                        $("input[type='file']").on('change',function(e){
+                            $("#file" + $(this).data('idenunciado')).html($(this).val());
+                        });
+                    </script>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="aa" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h2 class="modal-title" id="myModalLabel">Posteo interno</h2>
+                    </div>
+                    <form action="/lab/intern/add" method="post" id="mform">
+                        <div class="modal-body">
+                            <div id="preview"></div>
+                            <div class="form-group">
+                                <h3 class="t1"></h3>
+                                <textarea type="text" name="texto1" class="hidden" id="editor"></textarea>
+                            </div>
+                            <div class="form-group" id="t2">
+                                <h3 class="t2"></h3>
+                                <textarea type="text" name="texto2" class="hidden" id="editor2"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <input type="hidden" value="<%= gral.idproyecto%>" name="idproy">
+                            <div class="form-group form-inline">
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                    <button type="submit" id="tipo" name="tipo" value=""  class="btn btn-primary">+ Post</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript">
+            $(function () {
+                //gral.token es el token que de la etapa actual en la que está el proyecto
+                $(document).on("click", ".postint", function() {
+                    var data;
+                    $("#editor").jqteVal("");
+                    data = $(this).data('tipo');
+                    $(".modal-footer #tipo").val(data);
+                    if(data == 1){
+                        $("#myModalLabel").html("Post Escrito");
+                        $(".t1").html("Comparte algo");
+                        $(".t2").html("");
+                        if(both){
+                            $("#editor2").jqte();
+                            both = false;
+                        }
+                    } else {
+                        if(!both){
+                            $("#editor2").jqte({
+                                color: false,
+                                source: false,
+                                sub: false,
+                                sup: false,
+                                strike: false,
+                                indent: false,
+                                format: false,
+                                outdent: false
+                            });
+                            both = true;
+                        }
+                    }
+                });
+                $(".redit").click(function(e){
+                    $("#myModalLabel").html("Repostear avance");
+                    var data = $(this).data('tipo');
+                    $(".modal-footer #tipo").val(data);
+                    $(".t1").html(token[0]);
+                    $(".t2").html(token[1]);
+                    $("#editor").jqteVal($(this).data('prim'));
+                    if(!both){
+                        $("#editor2").jqte();
+                        both = true;
+                    }
+                    $("#editor2").jqteVal($(this).data('sec'));
+                });
+            })
+        </script>
+
+<%- include layouts/proyect_footer.ejs %>
