@@ -74,8 +74,10 @@
                     <form action="/lab/proy/sol/add" method="post" id="mform">
                         <div class="modal-body">
                             <h4>Ahora el proyecto debe responder a:</h4>
-                            <li><%= gral.token.split("&&")[0]%></li>
-                            <li><%= gral.token.split("&&")[1]%></li>
+                            <% gral.token = gral.token.split("&&");
+                            for(var i = 0;i<gral.token.length;i++){%>
+                            <li><%= gral.token[i].split("@@")[0]%></li>
+                            <%}%>
                             <h4>Contribuye con alguna idea, solución o conocimiento que creas pueda ser útil para el proyecto.</h4>
                             <h5>Si eres seleccionado por los integrantes, podrás participar del mismo.</h5>
                             <div class="form-group">

@@ -11,7 +11,6 @@ var bodyParser = require('body-parser');
 var intern = require('./routes/intern');
 var index = require('./routes/index');
 var proyect = require('./routes/proyectos');
-
 mailer.extend(app, {
     from: 'no-reply@example.com',
     host: 'smtp.gmail.com', // hostname
@@ -40,11 +39,9 @@ app.use(cookieSession({
     keys: ['usuarios']
 }));
 
-app.use("/", index);
-app.use('/lab', index);
-app.use('/lab/proy', proyect);
-app.use('/lab/intern',intern);
-
+app.use('/', index);
+app.use('/proy', proyect);
+app.use('/intern',intern);
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
     var err = new Error('Not Found');
