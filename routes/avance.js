@@ -77,12 +77,16 @@ router.get("/getAll/:idproyecto/:len",function(req,res){
                            var hasMore
                            if(rows.length){
                                var arrayAux
+                               var objAux
                                rows = rows.map(function(val){
+                                   objAux = val
                                    arrayAux = val.ansToken.split('&&').map(function(string){
                                      string = string.split("@@");
                                      return string;
                                    });
-                                   return ({...val, userToken: val.userToken.split('@@'), ansToken: arrayAux});
+                                   objAux.userToken = val.userToken.split('@@')
+                                   objAux.ansToken = arrayAux
+                                   return objAux;
                                });
                            }
                            rows.length < 5 ? hasMore = false : hasMore = true
