@@ -1,0 +1,136 @@
+<%- include layouts/proyect_header %>
+
+<style>
+    .taken{
+        border: 3px solid greenyellow;
+    }
+    .choque{
+        background-color: red;
+    }
+</style>
+
+<div class="container blog-content">
+    <div class="col-md-4">
+        <h1>Programación: </h1>
+        <ul>
+            <li draggable="true" ondragstart="drag(event)" data-name="Programacion" data-seccion="idseccion" data-token="lun@@h1&&jue@@h7">Sección 1</li>
+            <li draggable="true" ondragstart="drag(event)" data-name="Programacion" data-token="mie@@h6&&jue@@h7">Sección 2</li>
+            <li draggable="true" ondragstart="drag(event)" data-name="Programacion" data-token="mie@@h3&&vie@@h7">Sección 3</li>
+            <li draggable="true" ondragstart="drag(event)" data-name="Programacion" data-token="lun@@h5&&sab@@h7">Sección 4</li>
+        </ul>
+    </div>
+    <div class="col-md-8" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <table class="table table-responsive">
+            <thead>
+            <tr>
+                <th>Lunes</th>
+                <th>Martes</th>
+                <th>Miercoles</th>
+                <th>Jueves</th>
+                <th>Viernes</th>
+                <th>Sábado</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr id="h1">
+                <td class="lun"></td>
+                <td class="mar"></td>
+                <td class="mie"></td>
+                <td class="jue"></td>
+                <td class="vie"></td>
+                <td class="sab"></td>
+            </tr>
+            <tr id="h2">
+                <td class="lun"></td>
+                <td class="mar"></td>
+                <td class="mie"></td>
+                <td class="jue"></td>
+                <td class="vie"></td>
+                <td class="sab"></td>
+            </tr>
+            <tr id="h3">
+                <td class="lun"></td>
+                <td class="mar"></td>
+                <td class="mie"></td>
+                <td class="jue"></td>
+                <td class="vie"></td>
+                <td class="sab"></td>
+            </tr>
+            <tr id="h4">
+                <td class="lun"></td>
+                <td class="mar"></td>
+                <td class="mie"></td>
+                <td class="jue"></td>
+                <td class="vie"></td>
+                <td class="sab"></td>
+            </tr>
+            <tr id="h5">
+                <td class="lun"></td>
+                <td class="mar"></td>
+                <td class="mie"></td>
+                <td class="jue"></td>
+                <td class="vie"></td>
+                <td class="sab"></td>
+            </tr>
+            <tr id="h6">
+                <td class="lun"></td>
+                <td class="mar"></td>
+                <td class="mie"></td>
+                <td class="jue"></td>
+                <td class="vie"></td>
+                <td class="sab"></td>
+            </tr>
+            <tr id="h7">
+                <td class="lun"></td>
+                <td class="mar"></td>
+                <td class="mie"></td>
+                <td class="jue"></td>
+                <td class="vie"></td>
+                <td class="sab"></td>
+            </tr>
+            <tr id="h8">
+                <td class="lun"></td>
+                <td class="mar"></td>
+                <td class="mie"></td>
+                <td class="jue"></td>
+                <td class="vie"></td>
+                <td class="sab"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script type="application/javascript">
+  function allowDrop(ev) {
+    ev.preventDefault();
+  }
+
+  function drag(ev) {
+    ev.dataTransfer.setData("text", $(ev.target).data('token'));
+    ev.dataTransfer.setData("title", $(ev.target).data('name'));
+  }
+
+  function drop(ev) {
+    ev.preventDefault();
+    var data = ev.dataTransfer.getData("text");
+    var title = ev.dataTransfer.getData("title");
+    data = data.split("&&")
+    data = data.map(function(value) {
+      return value.split("@@")
+    })
+    var aux;
+    data.forEach(function (item) {
+      aux = $("#" + item[1].toString() + " > ." + item[0].toString())
+      console.log(aux.html())
+      if (aux.html() !== ''){
+        aux.addClass('choque')
+      }
+      aux.append(title)
+      aux.addClass("taken")
+    })
+  }
+</script>
+
+<%- include layouts/proyect_footer %>
+

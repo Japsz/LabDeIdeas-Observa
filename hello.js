@@ -1,6 +1,8 @@
 var express = require('express');
 var http = require('http');
 var path = require('path');
+var multer = require('multer')
+var cors = require('cors');
 var app = express(), mailer = require("express-mailer");
 
 var logger = require('morgan');
@@ -8,9 +10,7 @@ var cookieParser = require('cookie-parser');
 var cookieSession = require('cookie-session');
 var bodyParser = require('body-parser');
 
-var intern = require('./routes/intern');
-var index = require('./routes/index');
-var proyect = require('./routes/proyectos');
+
 mailer.extend(app, {
     from: 'no-reply@example.com',
     host: 'smtp.gmail.com', // hostname
@@ -38,16 +38,44 @@ app.use(cookieSession({
     name: 'session',
     keys: ['usuarios']
 }));
+app.use(cors())
 
-app.use('/', index);
-app.use('/proy', proyect);
-app.use('/intern',intern);
+app.use('/', require('./routes/index'));
+app.use('/proy', require('./routes/proyectos'));
+app.use('/intern',require('./routes/intern'));
+app.use('/internPost',require('./routes/postInterno'));
+app.use('/internComment',require('./routes/commentInterno'));
+app.use('/acts', require('./routes/actualizaciones'));
+app.use('/sol', require('./routes/solucion'));
+app.use('/avance', require('./routes/avance'))
+
+app.options('/upload', function (req,res) {
+    res.sendStatus(200)
+})
+app.post('/upload', function (req,res) {
+    var upload = multer({ storage: storage }).single('file')
+    upload(req,res, function (err) {
+        if (err instanceof multer.MulterError) {
+            return res.status(500).json(err)
+        } else if (err) {
+            return res.status(500).json(err)
+        }
+        return res.status(200).send(req.file)
+    });
+})
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
     var err = new Error('Not Found');
     err.status = 404;
 });
-
+var storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, './public/web-img')
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + '-' +file.originalname )
+    }
+})
 // error handler
 app.use(function(err, req, res, next) {
     // set locals, only providing error in development
@@ -63,5 +91,3 @@ var server  = http.createServer(app);
 server.listen(app.get('port'), function(){
     console.log('The game starts on port ' + app.get('port'));
 });
-
-const io = require('socket.io')(server);
