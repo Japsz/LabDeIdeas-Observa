@@ -3,7 +3,7 @@ var router = express.Router()
 var connection = require('express-myconnection')
 var mysql = require('mysql')
 const jwt = require('jwt-simple');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const credentials = require('../dbCredentials')
 

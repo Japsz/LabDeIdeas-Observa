@@ -2,7 +2,6 @@ var express = require('express')
 var router = express.Router()
 var connection = require('express-myconnection')
 var mysql = require('mysql')
-var formidable = require('formidable')
 var avance = require('./avance')
 router.use(
   connection(mysql, {
