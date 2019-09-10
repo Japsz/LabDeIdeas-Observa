@@ -3,17 +3,10 @@ var router = express.Router()
 var connection = require('express-myconnection')
 var mysql = require('mysql')
 
+const credentials = require('../dbCredentials')
+
 router.use(
-  connection(mysql, {
-
-    host: '127.0.0.1',
-    user: 'root',
-    password: '1234',
-    port: 3306,
-    database: 'Observapp',
-    insecureAuth: true
-
-  }, 'pool')
+  connection(mysql, credentials, 'pool')
 )
 
 router.get('/getAll/:idpostinterno/:len', function (req,res) {

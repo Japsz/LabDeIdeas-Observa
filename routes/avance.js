@@ -3,23 +3,47 @@ var router = express.Router();
 var connection  = require('express-myconnection');
 var mysql = require('mysql');
 
+const credentials = require('../dbCredentials')
+
 router.use(
-    connection(mysql,{
-
-        host: '127.0.0.1',
-        user: 'root',
-        password : 'observaproyecta',
-        port : 3306,
-        database:'Observapp',
-        insecureAuth : true
-
-    },'pool')
+    connection(mysql, credentials,'pool')
 );
+const validatorMiddleware = (req, res, next) => {
+    let token = req.headers['authorization']
+    if (token) {
+        try{
+            let decoded = jwt.decode(token, req.app.get('jwtTokenSecret'))
+            req.getConnection(function (err, connection) {
+                if (err) {
+                    console.log(err)
+                    res.sendStatus(500)
+                } else {
+                    connection.query('SELECT DISTINCT idproyecto FROM userproyecto WHERE iduser = ?', decoded.iduser, function (err, rows) {
+                        if (err) {
+                            console.log(err)
+                            res.sendStatus(500)
+                        } else {
+                            req.user = {
+                                ...decoded,
+                                proyList: rows.map((item) => parseInt(item.idproyecto))
+                            }
+                            next()
+                        }
+                    })
+                }
+            })
+        } catch(e) {
+            res.sendStatus(400)
+        }
+    } else {
+        res.sendStatus(401)
+    }
+}
 
-router.options('/add', function(req,res){
+router.options('/add', validatorMiddleware,  function(req,res){
     res.sendStatus(200)
 })
-router.post('/add',function(req,res){
+router.post('/add', validatorMiddleware, function(req,res){
     var input = req.body;
     console.log(input);
     req.getConnection(function(err,connection){
@@ -49,7 +73,7 @@ router.post('/add',function(req,res){
     });
 });
 
-router.get("/getAll/:idproyecto/:len",function(req,res){
+router.get("/getAll/:idproyecto/:len", validatorMiddleware,function(req,res){
    req.getConnection(function(err,connection){
        if(err){
            console.log(err);
@@ -99,12 +123,55 @@ router.get("/getAll/:idproyecto/:len",function(req,res){
        }
    })
 });
+//Embed from actualización pública
+router.get("/get/:idavance",function(req,res){
+    req.getConnection(function(err,connection){
+        if(err){
+            console.log(err);
+            res.sendStatus(500);
+        } else {
+            connection.query("SELECT avance.*,GROUP_CONCAT(DISTINCT enunciado.enunciado,'@@',enunciado.archivo,'@@',respuesta.contenido SEPARATOR '&&') AS ansToken" +
+              " ,GROUP_CONCAT(DISTINCT user.username,'@@',COALESCE(user.avatar_pat,'/assets/img/placeholder.png')) AS userToken,etapas.nro" +
+              " FROM avance" +
+              " LEFT JOIN respuesta ON respuesta.idavance = avance.idavance" +
+              " LEFT JOIN enunciado ON enunciado.idenunciado = respuesta.idenunciado" +
+              " LEFT JOIN user ON user.iduser = avance.iduser" +
+              " LEFT JOIN etapas ON etapas.idetapa = enunciado.idetapa" +
+              " WHERE avance.idavance = ? GROUP BY avance.idavance ORDER BY avance.fecha ",[req.params.idavance],function(err,rows){
+                if(err){
+                    console.log(err);
+                    res.sendStatus(500);
+                } else {
+                    if(rows.length){
+                        var arrayAux
+                        var objAux
+                        rows = rows.map(function(val){
+                            objAux = val
+                            arrayAux = val.ansToken.split('&&').map(function(string){
+                                string = string.split("@@");
+                                return string;
+                            });
+                            objAux.userToken = val.userToken.split('@@')
+                            objAux.ansToken = arrayAux
+                            return objAux;
+                        });
+                        res.header('status','200').send({idavance: rows[0].idavance, ansToken: rows[0].ansToken, userToken: rows[0].userToken});
+                    } else {
+                        console.log("no existe")
+                        res.sendStatus(500)
+                    }
+
+                }
+            });
+        }
+    })
+});
 
 //Añadir Like a avance
-router.options('/addLike', function (req, res) {
+router.options('/addLike', validatorMiddleware, function (req, res) {
     res.sendStatus(200)
 })
-router.post('/addLike', function (req, res) {
+router.post('/addLike', validatorMiddleware,function (req, res) {
     req.getConnection(function (err, connection) {
         if (err) {
             console.log(err)
@@ -158,13 +225,34 @@ router.post('/addLike', function (req, res) {
 router.options('/preAprove', function (req, res) {
     res.sendStatus(200)
 })
-router.post('/preAprove', function (req, res) {
+router.post('/preAprove', validatorMiddleware, function (req, res) {
     req.getConnection(function(err, connection){
         if(err){
             console.log(err)
             res.sendStatus(500)
         } else {
             connection.query('UPDATE avance SET estado = "preaprobado" WHERE idavance = ?', req.body.idavance, function(err, rows){
+                if (err) {
+                    console.log(err)
+                    res.sendStatus(500)
+                } else {
+                    res.sendStatus(200)
+                }
+            })
+        }
+    })
+})
+//postular
+router.options('/postulate', validatorMiddleware, function (req, res) {
+    res.sendStatus(200)
+})
+router.post('/postulate', validatorMiddleware, function (req, res) {
+    req.getConnection(function(err, connection){
+        if(err){
+            console.log(err)
+            res.sendStatus(500)
+        } else {
+            connection.query('UPDATE avance SET estado = "pendiente" WHERE idavance = ?', req.body.idavance, function(err, rows){
                 if (err) {
                     console.log(err)
                     res.sendStatus(500)

@@ -3,15 +3,10 @@ var router = express.Router();
 var connection  = require('express-myconnection');
 var mysql = require('mysql');
 
-router.use(
-    connection(mysql,{
+const credentials = require('../dbCredentials')
 
-        host: '127.0.0.1',
-        user: 'obs',
-        password : 'observaproyecta',
-        port : 3306,
-        database:'Observapp'
-    },'pool')
+router.use(
+    connection(mysql, credentials, 'pool')
 );
 
 router.get("/", function(req, res){

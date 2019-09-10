@@ -3,18 +3,42 @@ var router = express.Router()
 var connection = require('express-myconnection')
 var mysql = require('mysql')
 
+const credentials = require('../dbCredentials')
+
 router.use(
-  connection(mysql, {
-
-    host: '127.0.0.1',
-    user: 'root',
-    password: '1234',
-    port: 3306,
-    database: 'Observapp',
-    insecureAuth: true
-
-  }, 'pool')
+  connection(mysql, credentials, 'pool')
 )
+const validatorMiddleware = (req, res, next) => {
+  let token = req.headers['authorization']
+  if (token) {
+    try{
+      let decoded = jwt.decode(token, req.app.get('jwtTokenSecret'))
+      req.getConnection(function (err, connection) {
+        if (err) {
+          console.log(err)
+          res.sendStatus(500)
+        } else {
+          connection.query('SELECT DISTINCT idproyecto FROM userproyecto WHERE iduser = ?', decoded.iduser, function (err, rows) {
+            if (err) {
+              console.log(err)
+              res.sendStatus(500)
+            } else {
+              req.user = {
+                ...decoded,
+                proyList: rows.map((item) => parseInt(item.idproyecto))
+              }
+              next()
+            }
+          })
+        }
+      })
+    } catch(e) {
+      res.sendStatus(400)
+    }
+  } else {
+    res.sendStatus(401)
+  }
+}
 //Conseguir Soluciones
 router.get('/getAll/:idproyecto/:len', function (req,res) {
   req.getConnection(function (err, connection) {

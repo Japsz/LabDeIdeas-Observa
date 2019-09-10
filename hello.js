@@ -10,7 +10,6 @@ var cookieParser = require('cookie-parser');
 var cookieSession = require('cookie-session');
 var bodyParser = require('body-parser');
 
-
 mailer.extend(app, {
     from: 'no-reply@example.com',
     host: 'smtp.gmail.com', // hostname
@@ -27,6 +26,7 @@ mailer.extend(app, {
 app.set('port', process.env.PORT || 8081);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+app.set('jwtTokenSecret', 'el-secreto-secretoso');
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
@@ -48,6 +48,7 @@ app.use('/internComment',require('./routes/commentInterno'));
 app.use('/acts', require('./routes/actualizaciones'));
 app.use('/sol', require('./routes/solucion'));
 app.use('/avance', require('./routes/avance'))
+app.use('/user', require('./routes/user'))
 
 app.options('/upload', function (req,res) {
     res.sendStatus(200)
