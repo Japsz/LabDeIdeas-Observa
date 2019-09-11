@@ -40,20 +40,20 @@ app.use(cookieSession({
 }));
 app.use(cors())
 
-app.use('/', require('./routes/index'));
-app.use('/proy', require('./routes/proyectos'));
-app.use('/intern',require('./routes/intern'));
-app.use('/internPost',require('./routes/postInterno'));
-app.use('/internComment',require('./routes/commentInterno'));
-app.use('/acts', require('./routes/actualizaciones'));
-app.use('/sol', require('./routes/solucion'));
-app.use('/avance', require('./routes/avance'))
-app.use('/user', require('./routes/user'))
+app.use('/quantumapi/', require('./routes/index'));
+app.use('/quantumapi/proy', require('./routes/proyectos'));
+app.use('/quantumapi/intern',require('./routes/intern'));
+app.use('/quantumapi/internPost',require('./routes/postInterno'));
+app.use('/quantumapi/internComment',require('./routes/commentInterno'));
+app.use('/quantumapi/acts', require('./routes/actualizaciones'));
+app.use('/quantumapi/sol', require('./routes/solucion'));
+app.use('/quantumapi/avance', require('./routes/avance'))
+app.use('/quantumapi/user', require('./routes/user'))
 
-app.options('/upload', function (req,res) {
+app.options('/quantumapi/upload', function (req,res) {
     res.sendStatus(200)
 })
-app.post('/upload', function (req,res) {
+app.post('/quantumapi/upload', function (req,res) {
     var upload = multer({ storage: storage }).single('file')
     upload(req,res, function (err) {
         if (err instanceof multer.MulterError) {
