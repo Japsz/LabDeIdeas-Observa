@@ -190,6 +190,43 @@ router.get('/info/:idproyecto', function (req, res) {
     })
   })
 })
+router.get('/getMine/:len', validatorMiddleware, function(req, res) {
+  req.getConnection(function (err, connection) {
+    if (err) {
+      console.log(err)
+      res.sendStatus(500)
+    } else {
+      connection.query('SELECT proyecto.*,user.username,COALESCE(user.avatar_pat,"/assets/img/placeholder.png") as iconouser, COALESCE(GROUP_CONCAT(DISTINCT tags.tag ORDER BY tags.tag),"") AS tagz,' +
+        ' LOCATE(CONCAT("&", CAST( ? AS CHAR), "&")  , CONCAT("&", GROUP_CONCAT(DISTINCT proylike.iduser SEPARATOR "&&"), "&")) as laiked, COUNT(DISTINCT proylike.iduser) as lenlaik' +
+        ' FROM proyecto' +
+        ' LEFT JOIN tagproyecto ON proyecto.idproyecto = tagproyecto.idproyecto' +
+        ' LEFT JOIN tags ON tagproyecto.idtag = tags.idtag' +
+        ' INNER JOIN user ON user.iduser = proyecto.idcreador' +
+        ' LEFT JOIN userproyecto ON userproyecto.idproyecto = proyecto.idproyecto' +
+        ' LEFT JOIN proylike ON proylike.idproyecto = proyecto.idproyecto' +
+        ' WHERE userproyecto.iduser = ? GROUP BY proyecto.idproyecto ORDER BY proyecto.actualizado DESC LIMIT ?,3', [req.user.iduser.toString(),req.user.iduser.toString(), parseInt(req.params.len)], function (err, rows) {
+        if (err) {
+          console.log(err)
+          res.sendStatus(500)
+        } else {
+          var hasMore, itemaux
+          if (rows) {
+            rows = rows.map(function (item) {
+              itemaux = item
+              itemaux.tagz = itemaux.tagz.split(',')
+              return itemaux
+            })
+            rows.length < 3 ? hasMore = false : hasMore = true
+            res.header('status', '200').send({ rows: rows, hasMore: hasMore })
+          } else {
+            res.sendStatus(200).send({ rows: [], hasMore: false })
+          }
+        }
+      })
+    }
+  })
+
+})
 //Añadir Like a proyecto
 router.options('/addLike', function (req, res) {
   res.sendStatus(200)
