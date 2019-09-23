@@ -4,6 +4,7 @@ var connection = require('express-myconnection')
 var mysql = require('mysql')
 const credentials = require('../dbCredentials')
 const validatorMiddleware = require('./middleware/api')
+const obsValidatorMiddleware = require('./middleware/apiObservatorio')
 
 router.use(
   connection(mysql, credentials, 'pool')
@@ -57,13 +58,13 @@ router.get('/getAll/:len', validatorMiddleware, function (req, res) {
 router.options('/addProy', function (req, res){
   res.sendStatus(200)
 })
-router.post('/addProy', validatorMiddleware, function (req, res) {
+router.post('/addProy', obsValidatorMiddleware, function (req, res) {
   var data = {
     idcreador: req.user.iduser,
     titulo: req.body.titulo,
     descripcion: req.body.descripcion,
     idods: req.body.idods,
-    idobservatorio: req.body.idobservatorio,
+    idobservatorio: req.user.idobs,
     media: req.body.media
   }
   req.getConnection(function (err, connection) {
