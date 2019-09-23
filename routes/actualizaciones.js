@@ -8,6 +8,7 @@ const credentials = require('../dbCredentials')
 router.use(
   connection(mysql, credentials, 'pool')
 )
+const validatorMiddleware = require('./middleware/api')
 
 router.get('/getAll/:idproyecto/:len', function (req,res) {
   req.getConnection(function (err, connection) {
@@ -36,36 +37,34 @@ router.get('/getAll/:idproyecto/:len', function (req,res) {
   });
 });
 
-router.get('/experiment', function (req,res) {
-  res.render('prueba',{admin: true, usr:{iduser: 1}}, function(err,html){
-    console.log(err)
-    res.send(html)
-  })
-})
 router.options('/add', function (req, res) {
   res.sendStatus(200)
 })
-router.post('/add', function (req, res) {
-  if (req.body.tipo === 4) {
-    var embed = require("embed-video");
-    // Crea iframe con el reproductor de video correspondiente (youtube, vimeo, dailymotion)
-    req.body.principal = embed(req.body.principal,{attr:{width:"100%",height:536}});
-  }
-  req.body.fecha = new Date();
-  delete req.body.fileLoad
-  req.getConnection(function (err, connection) {
-    connection.query('INSERT INTO actualizacion SET ?', [req.body], function (err, rows) {
-      if (err) {
-        console.log('Error Selecting : %s ', err)
-        res.sendStatus(500)
-      } else {
-        res.header('status','200').send({})
-        connection.query('UPDATE proyecto SET actualizado = CURRENT_TIMESTAMP WHERE idproyecto = ?', req.body.idproyecto, function (err, rows) {
-          if (err) { console.log('Error Selecting : %s ', err) }
-        })
-      }
+router.post('/add', validatorMiddleware, function (req, res) {
+  if (req.user.proyList.includes(parseInt(req.body.idproyecto))) {
+    if (req.body.tipo === 4) {
+      var embed = require("embed-video");
+      // Crea iframe con el reproductor de video correspondiente (youtube, vimeo, dailymotion)
+      req.body.principal = embed(req.body.principal,{attr:{width:"100%",height:536}});
+    }
+    req.body.fecha = new Date();
+    delete req.body.fileLoad
+    req.getConnection(function (err, connection) {
+      connection.query('INSERT INTO actualizacion SET ?', [req.body], function (err, rows) {
+        if (err) {
+          console.log('Error Selecting : %s ', err)
+          res.sendStatus(500)
+        } else {
+          res.sendStatus(200)
+          connection.query('UPDATE proyecto SET actualizado = CURRENT_TIMESTAMP WHERE idproyecto = ?', req.body.idproyecto, function (err, rows) {
+            if (err) { console.log('Error Selecting : %s ', err) }
+          })
+        }
+      })
     })
-  })
+  } else {
+
+  }
 })
 
 module.exports = router;

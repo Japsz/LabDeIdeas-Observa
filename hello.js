@@ -18,7 +18,7 @@ mailer.extend(app, {
     transportMethod: 'SMTP', // default is SMTP. Accepts anything that nodemailer accepts
     auth: {
         user: 'observaciudadania17@gmail.com',
-        pass: 'proyectaobserva'
+        pass: 'observa2020'
     }
 });
 

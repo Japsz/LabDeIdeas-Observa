@@ -8,37 +8,7 @@ const credentials = require('../dbCredentials')
 router.use(
     connection(mysql, credentials,'pool')
 );
-const validatorMiddleware = (req, res, next) => {
-    let token = req.headers['authorization']
-    if (token) {
-        try{
-            let decoded = jwt.decode(token, req.app.get('jwtTokenSecret'))
-            req.getConnection(function (err, connection) {
-                if (err) {
-                    console.log(err)
-                    res.sendStatus(500)
-                } else {
-                    connection.query('SELECT DISTINCT idproyecto FROM userproyecto WHERE iduser = ?', decoded.iduser, function (err, rows) {
-                        if (err) {
-                            console.log(err)
-                            res.sendStatus(500)
-                        } else {
-                            req.user = {
-                                ...decoded,
-                                proyList: rows.map((item) => parseInt(item.idproyecto))
-                            }
-                            next()
-                        }
-                    })
-                }
-            })
-        } catch(e) {
-            res.sendStatus(400)
-        }
-    } else {
-        res.sendStatus(401)
-    }
-}
+const validatorMiddleware = require('./middleware/api')
 
 router.options('/add', validatorMiddleware,  function(req,res){
     res.sendStatus(200)
@@ -50,7 +20,7 @@ router.post('/add', validatorMiddleware, function(req,res){
         if(err){
             console.log(err);
             res.sendStatus(500);
-        } else connection.query("INSERT INTO avance SET ?",[{estado:'propuesto',idproyecto:input.idproyecto, iduser: req.body.iduser}],function(err,rows){
+        } else connection.query("INSERT INTO avance SET ?",[{estado:'propuesto',idproyecto:input.idproyecto, iduser: req.user.iduser}],function(err,rows){
             if(err){
                 console.log(err);
                 res.sendStatus(500);
@@ -93,7 +63,7 @@ router.get("/getAll/:idproyecto/:len", validatorMiddleware,function(req,res){
                        " LEFT JOIN user ON user.iduser = avance.iduser" +
                        " LEFT JOIN avancelike ON avancelike.idavance = avance.idavance" +
                        " LEFT JOIN etapas ON etapas.idetapa = enunciado.idetapa" +
-                       " WHERE avance.idproyecto = ? GROUP BY avance.idavance ORDER BY avance.fecha DESC LIMIT ?,5",["1", req.params.idproyecto, parseInt(req.params.len)],function(err,rows){
+                       " WHERE avance.idproyecto = ? GROUP BY avance.idavance ORDER BY avance.fecha DESC LIMIT ?,5",[req.user.iduser.toString(), req.params.idproyecto, parseInt(req.params.len)],function(err,rows){
                        if(err){
                            console.log(err);
                            res.sendStatus(500);
@@ -177,13 +147,13 @@ router.post('/addLike', validatorMiddleware,function (req, res) {
             console.log(err)
             res.sendStatus(500)
         } else {
-            connection.query('SELECT * FROM avancelike WHERE idavance = ? AND iduser = ?', [req.body.idavance, req.body.iduser], function (err, rows) {
+            connection.query('SELECT * FROM avancelike WHERE idavance = ? AND iduser = ?', [req.body.idavance, req.user.iduser], function (err, rows) {
                 if (err) {
                     console.log('Error selecting : %s ', err)
                     res.sendStatus(500)
                 } else {
                     if (rows.length) {
-                        connection.query('DELETE FROM avancelike WHERE idavance = ? AND iduser = ?', [req.body.idavance, req.body.iduser], function (err, rows) {
+                        connection.query('DELETE FROM avancelike WHERE idavance = ? AND iduser = ?', [req.body.idavance, req.user.iduser], function (err, rows) {
                             if (err) {
                                 console.log('Error deleting : %s ', err)
                                 res.sendStatus(500)
@@ -200,7 +170,7 @@ router.post('/addLike', validatorMiddleware,function (req, res) {
                             }
                         })
                     } else {
-                        connection.query('INSERT INTO avancelike SET ?', { idavance: req.body.idavance, iduser: req.body.iduser }, function (err, rows) {
+                        connection.query('INSERT INTO avancelike SET ?', { idavance: req.body.idavance, iduser: req.user.iduser }, function (err, rows) {
                             if (err) {
                                 console.log('Error inserting : %s ', err)
                                 res.sendStatus(500)

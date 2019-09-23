@@ -3,6 +3,7 @@ var router = express.Router()
 var connection = require('express-myconnection')
 var mysql = require('mysql')
 const credentials = require('../dbCredentials')
+const validatorMiddleware = require('./middleware/api')
 
 router.use(
   connection(mysql, credentials, 'pool')
@@ -17,27 +18,7 @@ function isMonitor (obsList, idobs) {
 };
 
 // Lógica ver todos los proyectos (página principal)
-router.get('/', function (req, res) {
-  if (req.session.isUserLogged) {
-    req.getConnection(function (err, connection) {
-      if (err) {
-        console.log('Error Connecting : %s ', err)
-      }
-      connection.query('SELECT proyecto.*,user.username,COALESCE(user.avatar_pat,"/assets/img/placeholder.png") as iconouser,GROUP_CONCAT(DISTINCT tags.tag ORDER BY tags.tag) AS tagz,' +
-                ' GROUP_CONCAT(DISTINCT proylike.iduser SEPARATOR "&&") as proylaik, COUNT(DISTINCT proylike.iduser) as lenlaik FROM' +
-                ' proyecto LEFT JOIN tagproyecto ON proyecto.idproyecto = tagproyecto.idproyecto LEFT JOIN tags ON tagproyecto.idtag = tags.idtag' +
-                ' INNER JOIN user ON user.iduser = proyecto.idcreador LEFT JOIN proylike ON proylike.idproyecto = proyecto.idproyecto' +
-                ' GROUP BY proyecto.idproyecto ORDER BY proyecto.actualizado DESC LIMIT 12', function (err, rows) {
-        if (err) { console.log('Error Selecting : %s ', err) }
-        res.render('proyect_indx', { data: rows, usr: req.session.user, admin: false })
-
-        // console.log(query.sql);
-      })
-    })
-  } else res.redirect('/bad_login')
-})
-// Lógica ver todos los proyectos (página principal)
-router.get('/getAll/:len', function (req, res) {
+router.get('/getAll/:len', validatorMiddleware, function (req, res) {
   req.getConnection(function (err, connection) {
     if (err) {
       console.log(err)
@@ -50,7 +31,7 @@ router.get('/getAll/:len', function (req, res) {
             ' LEFT JOIN tags ON tagproyecto.idtag = tags.idtag' +
             ' INNER JOIN user ON user.iduser = proyecto.idcreador' +
             ' LEFT JOIN proylike ON proylike.idproyecto = proyecto.idproyecto' +
-            ' GROUP BY proyecto.idproyecto ORDER BY proyecto.actualizado DESC LIMIT ?,3', ["1", parseInt(req.params.len)], function (err, rows) {
+            ' GROUP BY proyecto.idproyecto ORDER BY proyecto.actualizado DESC LIMIT ?,3', [req.user.iduser.toString(), parseInt(req.params.len)], function (err, rows) {
         if (err) {
           console.log(err)
           res.sendStatus(500)
@@ -76,9 +57,9 @@ router.get('/getAll/:len', function (req, res) {
 router.options('/addProy', function (req, res){
   res.sendStatus(200)
 })
-router.post('/addProy', function (req, res) {
+router.post('/addProy', validatorMiddleware, function (req, res) {
   var data = {
-    idcreador: req.body.idcreador,
+    idcreador: req.user.iduser,
     titulo: req.body.titulo,
     descripcion: req.body.descripcion,
     idods: req.body.idods,
@@ -209,67 +190,23 @@ router.get('/info/:idproyecto', function (req, res) {
     })
   })
 })
-// Lógica ver mis proyectos "como ciudadano"
-router.get('/proy_cdd', function (req, res) {
-  if (req.session.isUserLogged) {
-    console.log("wena")
-    req.getConnection(function (err, connection) {
-      connection.query('SELECT proyecto.*,GROUP_CONCAT(DISTINCT tags.tag ORDER BY tags.tag) AS tagz FROM' +
-        ' proyecto LEFT JOIN tagproyecto ON proyecto.idproyecto = tagproyecto.idproyecto LEFT JOIN tags ON tagproyecto.idtag = tags.idtag' +
-        ' LEFT JOIN userproyecto ON proyecto.idproyecto = userproyecto.idproyecto LEFT JOIN user ON user.iduser = userproyecto.iduser' +
-        ' WHERE user.iduser = ? GROUP BY proyecto.idproyecto ORDER BY proyecto.actualizado DESC', [req.session.user.iduser], function (err, rows) {
-        if (err) { console.log('Error Selecting : %s ', err) }
-        res.render('my_proy', { data: rows, usr: req.session.user, admin: false })
-
-        // console.log(query.sql);
-      })
-    })
-  } else res.redirect('/bad_login')
-})
-// Renderizar barra de información de un proyecto.
-router.post('/render_proyinfo', function (req, res) {
-  if (req.session.isUserLogged) {
-    var input = JSON.parse(JSON.stringify(req.body))
-
-    req.getConnection(function (err, connection) {
-      connection.query('SELECT group_concat(DISTINCT user.username , "@" , user.iduser, "@", user.avatar_pat, "@", userproyecto.flag) as usuarios,proyecto.*,etapas.likes' +
-                ' FROM postinterno' +
-                ' RIGHT JOIN proyecto ON postinterno.idproyecto = proyecto.idproyecto' +
-                ' LEFT JOIN userproyecto ON userproyecto.idproyecto = proyecto.idproyecto' +
-                ' LEFT JOIN user ON user.iduser = userproyecto.iduser' +
-                ' LEFT JOIN event ON proyecto.idevento = event.idevento' +
-                ' LEFT JOIN etapas ON etapas.idevento = event.idevento' +
-                ' WHERE postinterno.idpostinterno = ? AND etapas.nro = proyecto.etapa GROUP BY proyecto.idproyecto', input.idpost, function (err, rows) {
-        if (err) { console.log('Error Selecting : %s ', err) }
-        if (rows.length) {
-          rows[0].usuarios = rows[0].usuarios.split(',')
-          for (var i = 0; i < rows[0].usuarios.length; i++) {
-            rows[0].usuarios[i] = rows[0].usuarios[i].split('@')
-          }
-          res.render('proyinfo', { gral: rows[0] })
-        }
-      })
-    })
-  } else res.redirect('/bad_login')
-})
-
 //Añadir Like a proyecto
 router.options('/addLike', function (req, res) {
   res.sendStatus(200)
 })
-router.post('/addLike', function (req, res) {
+router.post('/addLike', validatorMiddleware, function (req, res) {
   req.getConnection(function (err, connection) {
     if (err) {
       console.log(err)
       res.sendStatus(500)
     } else {
-      connection.query('SELECT * FROM proylike WHERE idproyecto = ? AND iduser = ?', [req.body.idproyecto, req.body.iduser], function (err, rows) {
+      connection.query('SELECT * FROM proylike WHERE idproyecto = ? AND iduser = ?', [req.body.idproyecto, req.user.iduser], function (err, rows) {
         if (err) {
           console.log('Error selecting : %s ', err)
           res.sendStatus(500)
         } else {
           if (rows.length) {
-            connection.query('DELETE FROM proylike WHERE idproyecto = ? AND iduser = ?', [req.body.idproyecto, req.body.iduser], function (err, rows) {
+            connection.query('DELETE FROM proylike WHERE idproyecto = ? AND iduser = ?', [req.body.idproyecto, req.user.iduser], function (err, rows) {
               if (err) {
                 console.log('Error deleting : %s ', err)
                 res.sendStatus(500)
@@ -285,7 +222,7 @@ router.post('/addLike', function (req, res) {
               }
             })
           } else {
-            connection.query('INSERT INTO proylike SET ?', { idproyecto: req.body.idproyecto, iduser: req.body.iduser }, function (err, rows) {
+            connection.query('INSERT INTO proylike SET ?', { idproyecto: req.body.idproyecto, iduser: req.user.iduser }, function (err, rows) {
               if (err) {
                 console.log('Error inserting : %s ', err)
                 res.sendStatus(500)

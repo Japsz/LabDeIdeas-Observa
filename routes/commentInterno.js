@@ -8,6 +8,7 @@ const credentials = require('../dbCredentials')
 router.use(
   connection(mysql, credentials, 'pool')
 )
+const validatorMiddleware = require('./middleware/api')
 
 router.get('/getAll/:idpostinterno/:len', function (req,res) {
   req.getConnection(function (err, connection) {

@@ -8,39 +8,10 @@ const credentials = require('../dbCredentials')
 router.use(
   connection(mysql, credentials, 'pool')
 )
-const validatorMiddleware = (req, res, next) => {
-  let token = req.headers['authorization']
-  if (token) {
-    try{
-      let decoded = jwt.decode(token, req.app.get('jwtTokenSecret'))
-      req.getConnection(function (err, connection) {
-        if (err) {
-          console.log(err)
-          res.sendStatus(500)
-        } else {
-          connection.query('SELECT DISTINCT idproyecto FROM userproyecto WHERE iduser = ?', decoded.iduser, function (err, rows) {
-            if (err) {
-              console.log(err)
-              res.sendStatus(500)
-            } else {
-              req.user = {
-                ...decoded,
-                proyList: rows.map((item) => parseInt(item.idproyecto))
-              }
-              next()
-            }
-          })
-        }
-      })
-    } catch(e) {
-      res.sendStatus(400)
-    }
-  } else {
-    res.sendStatus(401)
-  }
-}
+const validatorMiddleware = require('./middleware/api')
+
 //Conseguir Soluciones
-router.get('/getAll/:idproyecto/:len', function (req,res) {
+router.get('/getAll/:idproyecto/:len', validatorMiddleware, function (req,res) {
   req.getConnection(function (err, connection) {
     if (err) {
       console.log(err);
@@ -51,14 +22,13 @@ router.get('/getAll/:idproyecto/:len', function (req,res) {
         ' FROM solucion' +
         ' LEFT JOIN user ON user.iduser = solucion.iduser' +
         ' LEFT JOIN solucionlike ON solucionlike.idsolucion = solucion.idsolucion' +
-        ' WHERE solucion.idproyecto = ? GROUP BY solucion.idsolucion ORDER BY solucion.fecha DESC LIMIT ?,5', ["1", req.params.idproyecto, parseInt(req.params.len)], function (err, rows) {
+        ' WHERE solucion.idproyecto = ? GROUP BY solucion.idsolucion ORDER BY solucion.fecha DESC LIMIT ?,5', [req.user.iduser.toString(), req.params.idproyecto, parseInt(req.params.len)], function (err, rows) {
         if (err) {
           console.log('Error Selecting : %s ', err)
           res.sendStatus(500);
         } else {
           var hasMore
           if(rows) {
-            console.log(rows[0])
             rows.length < 5 ? hasMore = false : hasMore = true
             res.header('status','200').send({rows: rows, hasMore: hasMore});
           } else {
@@ -74,43 +44,45 @@ router.get('/getAll/:idproyecto/:len', function (req,res) {
 router.options('/add',function (req, res) {
   res.sendStatus(204)
 })
-router.post('/add', function (req, res) {
+router.post('/add', validatorMiddleware, function (req, res) {
   var data = {
-    iduser: req.body.iduser,
+    iduser: req.user.iduser,
     idproyecto: req.body.idproyecto,
     etapa: req.body.etapa,
     contenido: req.body.contenido,
   }
-  req.getConnection(function (err, connection) {
-    connection.query('INSERT INTO solucion SET ?', [data], function (err, rows) {
-      if (err) {
-        console.log('Error Selecting : %s ', err)
-        res.sendStatus(500)
-      } else {
-        res.sendStatus(200)
-      }
-      // console.log(query.sql);
+  if (!req.user.proyList.includes(parseInt(req.body.idproyecto))){
+    req.getConnection(function (err, connection) {
+      connection.query('INSERT INTO solucion SET ?', [data], function (err, rows) {
+        if (err) {
+          console.log('Error Selecting : %s ', err)
+          res.sendStatus(500)
+        } else {
+          res.sendStatus(200)
+        }
+        // console.log(query.sql);
+      })
     })
-  })
+  } else res.sendStatus(401)
 })
 
 //Añadir Like a avance
 router.options('/addLike', function (req, res) {
   res.sendStatus(200)
 })
-router.post('/addLike', function (req, res) {
+router.post('/addLike', validatorMiddleware, function (req, res) {
   req.getConnection(function (err, connection) {
     if (err) {
       console.log(err)
       res.sendStatus(500)
     } else {
-      connection.query('SELECT * FROM solucionlike WHERE idsolucion = ? AND iduser = ?', [req.body.idsolucion, req.body.iduser], function (err, rows) {
+      connection.query('SELECT * FROM solucionlike WHERE idsolucion = ? AND iduser = ?', [req.body.idsolucion, req.user.iduser], function (err, rows) {
         if (err) {
           console.log('Error selecting : %s ', err)
           res.sendStatus(500)
         } else {
           if (rows.length) {
-            connection.query('DELETE FROM solucionlike WHERE idsolucion = ? AND iduser = ?', [req.body.idsolucion, req.body.iduser], function (err, rows) {
+            connection.query('DELETE FROM solucionlike WHERE idsolucion = ? AND iduser = ?', [req.body.idsolucion, req.user.iduser], function (err, rows) {
               if (err) {
                 console.log('Error deleting : %s ', err)
                 res.sendStatus(500)
@@ -127,7 +99,7 @@ router.post('/addLike', function (req, res) {
               }
             })
           } else {
-            connection.query('INSERT INTO solucionlike SET ?', { idsolucion: req.body.idsolucion, iduser: req.body.iduser }, function (err, rows) {
+            connection.query('INSERT INTO solucionlike SET ?', { idsolucion: req.body.idsolucion, iduser: req.user.iduser }, function (err, rows) {
               if (err) {
                 console.log('Error inserting : %s ', err)
                 res.sendStatus(500)
@@ -152,13 +124,12 @@ router.post('/addLike', function (req, res) {
 router.options('/joinUser', function (req, res) {
   res.sendStatus(200)
 })
-router.post('/joinUser', function (req, res) {
+router.post('/joinUser', validatorMiddleware, function (req, res) {
   req.getConnection(function (err, connection) {
     if (err) {
       console.log(err)
       res.sendStatus(500)
     } else {
-      console.log(req.body)
       connection.query('SELECT solucion.*, COALESCE(userproyecto.flag, "none") AS isMember, proyecto.etapa AS etapaProyecto,proyecto.titulo, user.correo' +
         ' FROM solucion' +
         ' LEFT JOIN userproyecto ON userproyecto.idproyecto = solucion.idproyecto AND solucion.iduser = userproyecto.iduser' +
@@ -171,7 +142,7 @@ router.post('/joinUser', function (req, res) {
         } else {
           if (rows.length) {
             var obj = rows[0]
-            if (obj.isMember === 'none') {
+            if (obj.isMember === 'none' && req.user.proyList.includes(parseInt(obj.idproyecto))) {
               connection.query('INSERT INTO userproyecto SET ?', [{iduser: obj.iduser, idproyecto: obj.idproyecto, etapa: obj.etapaProyecto, flag: 'Colaborador'}], function (err, rows) {
                 if (err) {
                   console.log('Error deleting : %s ', err)
@@ -213,7 +184,7 @@ router.post('/joinUser', function (req, res) {
                 }
               })
             } else {
-              console.log('Error selecting : %s ', err)
+              console.log('O ya es miembro o no tiene autorización : %s ', err)
               res.sendStatus(500)
             }
           } else {
