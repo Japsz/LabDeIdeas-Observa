@@ -22,7 +22,7 @@ router.post('/login', function (req, res) {
       res.sendStatus(500)
     } else {
       if (req.body.username && req.body.password) {
-        connection.query('SELECT password, iduser, username, avatar_pat FROM user WHERE username = ? LIMIT 1', req.body.username, function (err, rows) {
+        connection.query('SELECT password, iduser, username, avatar_pat, tipo FROM user WHERE username = ? LIMIT 1', req.body.username, function (err, rows) {
           if (err) {
             console.log(err)
             res.sendStatus(500)
