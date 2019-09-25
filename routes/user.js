@@ -93,19 +93,4 @@ router.post('/checkToken', function (req, res) {
   }
 })
 
-router.get('/tester', function(req, res){
-  req.getConnection(function (err, connection) {
-    if(err){
-      res.send({err: err})
-    } else {
-      connection.query('SELECT COUNT(DISTINCT iduser) AS users FROM user', function(err, rows){
-        if (err){
-          res.send({err: err})
-        } else {
-          res.send({err: '', rows: rows})
-        }
-      })
-    }
-  })
-})
 module.exports = router;

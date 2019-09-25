@@ -71,10 +71,12 @@ app.use(function(req, res, next) {
 });
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, './public/web-img')
+        cb(null, './public/quantumapi/web-img')
     },
     filename: function (req, file, cb) {
-        cb(null, Date.now() + '-' +file.originalname )
+        var str = file.originalname
+        str = str.replace(' ', '').replace(',', '').replace('/', '').replace('\\', '')
+        cb(null, Date.now() + '-' + str )
     }
 })
 // error handler
